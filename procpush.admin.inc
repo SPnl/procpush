@@ -12,7 +12,7 @@ function procpush_settings_form($form, &$form_state) {
   $form['#suffix'] = '</div>';
 
   // Get target forms from procurios.
-  $api_forms_list = procapi_get_proc_forms_list();
+  $api_forms_list = procapi_registration_get_forms();
   $form['procpush_api_form'] = array(
     '#type' => 'select',
     '#title' => 'Kies het procurios API formulier',
@@ -33,7 +33,7 @@ function procpush_settings_form($form, &$form_state) {
       '#title' => 'Veld mapping',
     );
     $webformsync_fields = spwebformsync_contact_data_fields();
-    $procurios_fields = procapi_get_proc_form_schema_contact_fields($form_id);
+    $procurios_fields = procapi_registration_get_fields($form_id);
     foreach ($webformsync_fields as $webformsync_field_key => $webformsync_field_title) {
       $form['field_mapping']['procpush_field_' . $webformsync_field_key . '_mapping'] = array(
         '#type' => 'select',

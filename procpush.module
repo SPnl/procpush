@@ -5,6 +5,13 @@
  */
 
 /**
+ * Implements hook_init().
+ */
+function procpush_init() {
+  module_load_include("inc", "procpush", "procpush");
+}
+
+/**
  * Push contact to procurios.
  *
  * Data fields defined by spwebformsync_contact_data_fields().
@@ -58,10 +65,10 @@ function procpush_push_contact($data, $debug_info) {
       $form_id = variable_get('procpush_api_form');
       if (!empty($form_id)) {
         // Validate object.
-        $validation_result = procapi_proc_validate_object($object, $form_id, $error);
+        $validation_result = procapi_registration_validate_object($object, $form_id, $error);
         if ($error == 'no error') {
           // Push object to Procurios.
-          $push_result = procapi_proc_push_object($object, $form_id, $error);
+          $push_result = procapi_registration_push_object($object, $form_id, $error);
           if (!empty($push_result) && !empty($push_result['registrationId'])) {
             watchdog('procpush', 'Pushed data to Procurios');
             return TRUE;
@@ -93,13 +100,6 @@ function procpush_push_contact($data, $debug_info) {
   );
   procpush_error($error_message, $debug_data);
   return $error;
-}
-
-/**
- * Implements hook_init().
- */
-function procpush_init() {
-  module_load_include("inc", "procpush", "procpush");
 }
 
 /**
