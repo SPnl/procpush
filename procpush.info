@@ -1,0 +1,6 @@
+name = Procurius push
+description =  Receives data from datadrop module and pushes data to Procurius CRM.
+core = 7.x
+package = sprbs
+dependencies[] = sprbs
+dependencies[] = procapi

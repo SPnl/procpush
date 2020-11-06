@@ -1,0 +1,137 @@
+<?php
+
+/**
+ * Push contact to procurios.
+ */
+
+/**
+ * Push contact to procurios.
+ *
+ * Data fields defined by spwebformsync_contact_data_fields().
+ *
+ * Data: array()
+ *   keys:
+ *     - contact_id
+ *     - name
+ *     - first_name
+ *     - middle_name
+ *     - last_name
+ *     - email
+ *     - telephone
+ *     - street
+ *     - house_number
+ *     - house_number_addition
+ *     - postal_code
+ *     - locality
+ *
+ */
+function procpush_push_contact($data, $debug_info) {
+  $push_result = NULL;
+  $error = 'no error';
+  // Check if testing.
+  if (
+    (!empty($data['name']) && strpos(strtolower($data['name']), '-test') !== FALSE) ||
+    (!empty($data['first_name']) && strpos(strtolower($data['first_name']), '-test') !== FALSE) ||
+    (!empty($data['last_name']) && strpos(strtolower($data['last_name']), '-test') !== FALSE)
+  ) {
+    drupal_set_message('Test data, not sending to CiviCRM');
+    return 'insufficient data';
+  }
+
+  // Split name in first and last name when available.
+  if (!empty($data['name']) && empty($data['last_name'])) {
+    $split_name = procapi_split_name($data['name']);    
+    if (!empty($split_name['last_name'])) {
+      $data['first_name'] = empty($split_name['first_name']) ? '' : $split_name['first_name'];
+      $data['middle_name'] = empty($split_name['middle_name']) ? '' : $split_name['middle_name'];
+      $data['last_name'] = $split_name['last_name'];
+      $data['name'] = '';
+    }
+  }
+
+  // Check if sufficient data.
+  if (procpush_check_submission_sufficient($data)) {
+    // Create data object.
+    $object = procpush_create_data_object($data);
+    if (!empty($object)) {
+      // Get api form id.
+      $form_id = variable_get('procpush_api_form');
+      if (!empty($form_id)) {
+        // Validate object.
+        $validation_result = procapi_proc_validate_object($object, $form_id, $error);
+        if ($error == 'no error') {
+          // Push object to Procurios.
+          $push_result = procapi_proc_push_object($object, $form_id, $error);
+          if (!empty($push_result) && !empty($push_result['registrationId'])) {
+            watchdog('procpush', 'Pushed data to Procurios');
+            return TRUE;
+          }
+        }
+      }
+      else {
+        $error = 'API form id niet gevonden';
+      }
+    }
+    else {
+      $error = 'Data object is leeg';
+    }
+  }
+  else {
+    $error = 'Te weinig data om gegevens naar Procurios te sturen';
+  }
+
+  // An error occurred.
+  $error_message = 'Er is een fout opgetreden bij het pushen van contact data naar Procurios.';
+  $debug_data = array(
+    'webfromsync_debug_info' => empty($debug_info) ? '' : $debug_info,
+    'data' => empty($data) ? '' : $data,
+    'data object' => empty($object) ? '' : $object,
+    'api form id' => empty($form_id) ? '' : $form_id,
+    'validation result' => empty($validation_result) ? '' : $validation_result,
+    'push result' => empty($push_result) ? '' : $push_result,
+    'error' => empty($error) ? '' : $error,
+  );
+  procpush_error($error_message, $debug_data);
+  return $error;
+}
+
+/**
+ * Implements hook_init().
+ */
+function procpush_init() {
+  module_load_include("inc", "procpush", "procpush");
+}
+
+/**
+ * Implements hook_menu().
+ * @return array Menu items
+ */
+
+function procpush_menu() {
+  $items = array();
+
+  $items['admin/config/sp/procpush'] = array(
+    'title' => 'Procurios Push',
+    'page callback'  => 'drupal_get_form',
+    'page arguments' => array('procpush_settings_form'),
+    'access callback' => 'sprbs_access_check',
+    'file' => 'procpush.admin.inc',
+  );
+
+  $items['admin/config/sp/procpush/settings'] = array(
+    'title' => 'Instellingen',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'access callback' => 'sprbs_access_check',
+  );
+
+  $items['admin/config/sp/procpush/test'] = array(
+    'title' => 'Test',
+    'type' => MENU_LOCAL_TASK,
+    'page callback'  => 'drupal_get_form',
+    'page arguments' => array('procpush_test_form'),
+    'file' => 'procpush.test.inc',
+    'access callback' => 'sprbs_access_check',
+  );
+
+  return $items;
+}
