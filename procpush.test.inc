@@ -25,37 +25,37 @@ function procpush_test_form($form, &$form_state) {
 function procpush_test_form_submit($form, &$form_state) {
   $storage = &$form_state['storage'];
 
-  /*
-  $token = procpush_get_oauth2_client_token();
-  dpm($token);
-  $registration_set = procpush_get_proc_registration_set();
-  dpm($registration_set);
-  //$schema = procpush_get_proc_form_schema(13);
-  //dpm($schema);
-  
-  $data = array(
-    'name' => 'Pietje Puk',
-    'email' => 'pietjepuk@gmail.com',
-    'street' => 'Camera Obscurastraat',
-    'house_number' => '101',
-    'postal_code' => '3813PK',
-  );
-  dpm('Creating object');
-  $object = procpush_create_data_object($data);
-  dpm($object);
-  dpm('Validating object');
-  $result = procpush_proc_validate_object($object, 13, $error);
-  dpm('Result');
-  dpm($result);
-  dpm('Error');
-  dpm($error);
-  dpm('Pushing object');
-  $result = procpush_proc_push_object($object, 13, $error);
-  dpm('Result');
-  dpm($result);
-  dpm('Error');
-  dpm($error);
-  */
+  //g$token = procapi_get_oauth2_client_token();
+  //gdpm($token);
+  //gdpm('Get registration set.');
+  //g$registration_set = procapi_registration_get_set();
+  //gdpm($registration_set);
+  //gdpm('Get schema.');
+  //g$schema = procapi_registration_get_form_schema(12);
+  //gdpm($schema);
+  //g
+  //g$data = array(
+  //g  'name' => 'Pietje Puk',
+  //g  'email' => 'pietjepuk@gmail.com',
+  //g  'street' => 'Camera Obscurastraat',
+  //g  'house_number' => '101',
+  //g  'postal_code' => '3813PK',
+  //g);
+  //gdpm('Creating object');
+  //g$object = procpush_create_data_object($data);
+  //gdpm($object);
+  //gdpm('Validating object');
+  //g$result = procapi_registration_validate_object($object, 12, $error);
+  //gdpm('Result');
+  //gdpm($result);
+  //gdpm('Error');
+  //gdpm($error);
+  //gdpm('Pushing object');
+  //g$result = procapi_registration_push_object($object, 12, $error);
+  //gdpm('Result');
+  //gdpm($result);
+  //gdpm('Error');
+  //gdpm($error);
 
   $form_state['rebuild'] = TRUE;
 }

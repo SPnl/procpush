@@ -21,6 +21,7 @@ function procpush_check_submission_sufficient($data) {
  * Create procurios form submission object from webformsync data.
  */
 function procpush_create_data_object($data) {
+  // Simple text field mappings are set in admin form.
   $mapping = variable_get('procpush_field_mapping');
   $object = array();
   foreach ($mapping as $webformsync_key => $procurios_key) {
@@ -33,6 +34,54 @@ function procpush_create_data_object($data) {
         unset($md[$keys[$i+1]]);
       }
       $object = array_merge_recursive($object, $md);
+    }
+  }
+
+  // Get form schema to validate field values.
+  $form_id = variable_get('procpush_api_form');
+  $api_schema_raw = procapi_registration_get_form_schema($form_id);
+  $api_properties = $api_schema_raw[$form_id]['properties'];
+
+  // SP Actief.
+  if (!empty($data['sp_active'])) {
+    // Actief SP.
+    if (!empty($data['sp_active']['active'])) {
+      if (isset($data['sp_active']['active'])) {
+        $object['class_1_ff_344583'] = $data['sp_active']['active'];
+      }
+    }
+    // Activiteiten SP.
+    if (!empty($data['sp_active']['activities'])) {
+      foreach ($data['sp_active']['activities'] as $activity) {
+        if (isset($api_properties['class_1_ff_344584']['properties'][$activity])) {
+          $object['class_1_ff_344584'][$activity] = TRUE;
+        }
+      }
+    }
+  }
+  
+  // SP Work and Interests field mapping.
+  if (!empty($data['sp_work_and_int'])) {
+    // Hoofdtaak.
+    if (!empty($data['sp_work_and_int']['main_task'])) {
+      foreach ($data['sp_work_and_int']['main_task'] as $task) {
+        if (isset($api_properties['class_1_ff_344585']['properties'][$task])) {
+          $object['class_1_ff_344585'][$task] = TRUE;
+        }
+      }
+    }
+    // Bedrijfstak.
+    if (!empty($data['sp_work_and_int']['industrial_sector'])) {
+      $sector = str_replace(', ', '_', $data['sp_work_and_int']['industrial_sector']);
+      if (isset($api_properties['class_1_ff_344587']['properties'][$sector])) {
+        $object['class_1_ff_344587'][$sector] = TRUE;
+      }
+    }
+    // Beroepsgroep.
+    if (!empty($data['sp_work_and_int']['occupational_group'])) {
+      if (isset($api_properties['class_1_ff_344586']['properties'][$data['sp_work_and_int']['occupational_group']])) {
+        $object['class_1_ff_344586'][$data['sp_work_and_int']['occupational_group']] = TRUE;
+      }
     }
   }
   return $object;
@@ -53,4 +102,23 @@ function procpush_error($error_message, $debug_data) {
   drupal_mail('spwebformsync', 'error', 'tdgraaff@sp.nl', language_default(), $message, 'webmaster@sp.nl');
 }
 
-
+function procpush_data_fields() {
+  $data_names = array(
+    'contact_id' => 'contact id',
+    'name' => 'gehele naam',
+    'first_name' => 'voornaam',
+    'middle_name' => 'tussenvoegsel',
+    'last_name' => 'achternaam',
+    'email' => 'e-mail',
+    'phone' => 'telefoon',
+    'fixed_phone' => 'telefoon vast',
+    'mobile_phone' => 'telefoon mobiel',
+    'street' => 'straat',
+    'house_number_and_addition' => 'huisnummer inclusief eventuele toevoeging',
+    'house_number' => 'huisnummer',
+    'house_number_addition' => 'huisnummer toevoeging',
+    'postal_code' => 'postcode',
+    'locality' => 'plaats',
+  );
+  return $data_names;
+}

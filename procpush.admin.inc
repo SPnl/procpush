@@ -32,15 +32,15 @@ function procpush_settings_form($form, &$form_state) {
       '#type' => 'fieldset',
       '#title' => 'Veld mapping',
     );
-    $webformsync_fields = spwebformsync_contact_data_fields();
+    $procpush_fields = procpush_data_fields();
     $procurios_fields = procapi_registration_get_fields($form_id);
-    foreach ($webformsync_fields as $webformsync_field_key => $webformsync_field_title) {
-      $form['field_mapping']['procpush_field_' . $webformsync_field_key . '_mapping'] = array(
+    foreach ($procpush_fields as $procpush_field_key => $procpush_field_title) {
+      $form['field_mapping']['procpush_field_' . $procpush_field_key . '_mapping'] = array(
         '#type' => 'select',
-        '#title' => $webformsync_field_title,
+        '#title' => $procpush_field_title,
         '#options' => $procurios_fields,
         '#empty_option' => '- selecteer -',
-        '#default_value' => variable_get('procpush_field_' . $webformsync_field_key . '_mapping', ''),
+        '#default_value' => variable_get('procpush_field_' . $procpush_field_key . '_mapping', ''),
       );
     }
   }

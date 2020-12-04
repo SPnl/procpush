@@ -14,9 +14,7 @@ function procpush_init() {
 /**
  * Push contact to procurios.
  *
- * Data fields defined by spwebformsync_contact_data_fields().
- *
- * Data: array()
+ * Data fields defined by procpush_data_fields():
  *   keys:
  *     - contact_id
  *     - name
@@ -24,13 +22,26 @@ function procpush_init() {
  *     - middle_name
  *     - last_name
  *     - email
- *     - telephone
+ *     - phone
+ *     - fixed_phone
+ *     - mobile_phone
  *     - street
+ *     - house_number_and_addition
  *     - house_number
  *     - house_number_addition
  *     - postal_code
  *     - locality
- *
+ *     - selections: array()
+ *     - sp_active: array(
+ *         active,
+ *         activities: array()
+ *       )
+ *     - sp_work_and_int: array(
+ *         main_task: array(),
+ *         industrial_sector,
+ *         occupational_group ,
+ *         membership: array(),
+ *       )
  */
 function procpush_push_contact($data, $debug_info) {
   $push_result = NULL;
@@ -53,6 +64,16 @@ function procpush_push_contact($data, $debug_info) {
       $data['middle_name'] = empty($split_name['middle_name']) ? '' : $split_name['middle_name'];
       $data['last_name'] = $split_name['last_name'];
       $data['name'] = '';
+    }
+  }
+
+  // Split house_number_and_addition when available.
+  if (!empty($data['house_number_and_addition']) && empty($data['house_number'])) {
+    $split_house_number = procapi_split_house_number_and_addition($data['house_number_and_addition']);    
+    if (!empty($split_house_number['house_number'])) {
+      $data['house_number'] = $split_house_number['house_number'];
+      $data['house_number_addition'] = empty($split_house_number['house_number_addition']) ? '' : $split_house_number['house_number_addition'];
+      $data['house_number_and_addition'] = '';
     }
   }
 
