@@ -12,40 +12,116 @@ function procpush_init() {
 }
 
 /**
- * Push contact to procurios.
+ * Data fields to be passed to procpush_push_contact($data).
  *
- * Data fields defined by procpush_data_fields():
- *   keys:
- *     - contact_id
- *     - name
- *     - first_name
- *     - middle_name
- *     - last_name
- *     - email
- *     - phone
- *     - fixed_phone
- *     - mobile_phone
- *     - street
- *     - house_number_and_addition
- *     - house_number
- *     - house_number_addition
- *     - postal_code
- *     - locality
- *     - selections: array()
- *     - sp_active: array(
- *         active,
- *         activities: array()
- *       )
- *     - sp_work_and_int: array(
- *         main_task: array(),
- *         industrial_sector,
- *         occupational_group ,
- *         membership: array(),
- *       )
+ * selections => array(
+ *   'add' => array(),
+ *   'remove' => array(),
+ * )
+ *
+ * sp_active => array(
+ *   active,
+ *   activities: array()
+ * )
+ *
+ * sp_work_and_int => array(
+ *   main_task: array(),
+ *   industrial_sector,
+ *   occupational_group ,
+ * )
+ *
  */
-function procpush_push_contact($data, $debug_info) {
-  $push_result = NULL;
-  $error = 'no error';
+function procpush_data_fields() {
+  $data_fields = array(
+    'relation_id' =>  array(
+      'title' => 'Relatienummer',
+      'type' => 'string',
+    ),
+    'overwrite' =>  array(
+      'title' => 'Overschrijven',
+      'type' => 'boolean',
+    ),
+    'name' =>  array(
+      'title' => 'Gehele naam',
+      'type' => 'string',
+    ),
+    'first_name' =>  array(
+      'title' => 'Voornaam',
+      'type' => 'string',
+    ),
+    'middle_name' =>  array(
+      'title' => 'Tussenvoegsel',
+      'type' => 'string',
+    ),
+    'last_name' =>  array(
+      'title' => 'Achternaam',
+      'type' => 'string',
+    ),
+    'email' =>  array(
+      'title' => 'E-mail',
+      'type' => 'string',
+    ),
+    'phone' =>  array(
+      'title' => 'Telefoon',
+      'type' => 'string',
+    ),
+    'fixed_phone' =>  array(
+      'title' => 'Telefoon vast',
+      'type' => 'string',
+    ),
+    'mobile_phone' =>  array(
+      'title' => 'Telefoon mobiel',
+      'type' => 'string',
+    ),
+    'street' =>  array(
+      'title' => 'Straat',
+      'type' => 'string',
+    ),
+    'house_number_and_addition' =>  array(
+      'title' => 'Huisnummer inclusief eventuele toevoeging',
+      'type' => 'string',
+    ),
+    'house_number' =>  array(
+      'title' => 'Huisnummer',
+      'type' => 'string',
+    ),
+    'house_number_addition' =>  array(
+      'title' => 'Huisnummer toevoeging',
+      'type' => 'string',
+    ),
+    'postal_code' =>  array(
+      'title' => 'Postcode',
+      'type' => 'string',
+    ),
+    'locality' =>  array(
+      'title' => 'Plaats',
+      'type' => 'string',
+    ),
+    'selections' =>  array(
+      'title' => 'Selecties',
+      'type' => 'array',
+    ),
+    'sp_active' =>  array(
+      'title' => 'Actief SP',
+      'type' => 'array',
+    ),
+    'sp_work_and_int' =>  array(
+      'title' => 'Werk en interesses',
+      'type' => 'array',
+    ),
+    'privacy' =>  array(
+      'title' => 'Privacy',
+      'type' => 'array',
+    ),
+  );
+  return $data_fields;
+}
+
+/**
+ * Push contact to procurios.
+ */
+function procpush_push_contact($data, $debug_info = NULL) {
+  $error = FALSE;
   // Check if testing.
   if (
     (!empty($data['name']) && strpos(strtolower($data['name']), '-test') !== FALSE) ||
@@ -53,74 +129,34 @@ function procpush_push_contact($data, $debug_info) {
     (!empty($data['last_name']) && strpos(strtolower($data['last_name']), '-test') !== FALSE)
   ) {
     drupal_set_message('Test data, not sending to CiviCRM');
-    return 'insufficient data';
+    return 'test data';
   }
 
-  // Split name in first and last name when available.
-  if (!empty($data['name']) && empty($data['last_name'])) {
-    $split_name = procapi_split_name($data['name']);    
-    if (!empty($split_name['last_name'])) {
-      $data['first_name'] = empty($split_name['first_name']) ? '' : $split_name['first_name'];
-      $data['middle_name'] = empty($split_name['middle_name']) ? '' : $split_name['middle_name'];
-      $data['last_name'] = $split_name['last_name'];
-      $data['name'] = '';
-    }
-  }
-
-  // Split house_number_and_addition when available.
-  if (!empty($data['house_number_and_addition']) && empty($data['house_number'])) {
-    $split_house_number = procapi_split_house_number_and_addition($data['house_number_and_addition']);    
-    if (!empty($split_house_number['house_number'])) {
-      $data['house_number'] = $split_house_number['house_number'];
-      $data['house_number_addition'] = empty($split_house_number['house_number_addition']) ? '' : $split_house_number['house_number_addition'];
-      $data['house_number_and_addition'] = '';
-    }
-  }
+  // Fix data for Procurios.
+  $data = procpush_fix_data($data);
 
   // Check if sufficient data.
   if (procpush_check_submission_sufficient($data)) {
-    // Create data object.
-    $object = procpush_create_data_object($data);
-    if (!empty($object)) {
-      // Get api form id.
-      $form_id = variable_get('procpush_api_form');
-      if (!empty($form_id)) {
-        // Validate object.
-        $validation_result = procapi_registration_validate_object($object, $form_id, $error);
-        if ($error == 'no error') {
-          // Push object to Procurios.
-          $push_result = procapi_registration_push_object($object, $form_id, $error);
-          if (!empty($push_result) && !empty($push_result['registrationId'])) {
-            watchdog('procpush', 'Pushed data to Procurios');
-            return TRUE;
-          }
-        }
-      }
-      else {
-        $error = 'API form id niet gevonden';
+    // Check if existing or new contact.
+    if (empty($data['relation_id'])) {
+      if ($relation_id = procpush_push_new_contact($data, $debug_info)) {
+        return $relation_id;
       }
     }
     else {
-      $error = 'Data object is leeg';
+      if (procpush_push_existing_contact($data, $debug_info)) {
+        return $data['relation_id'];
+      }
     }
   }
   else {
-    $error = 'Te weinig data om gegevens naar Procurios te sturen';
+    $debug_info['push_contact_submission_check'] = 'Insufficient data.';
   }
 
   // An error occurred.
   $error_message = 'Er is een fout opgetreden bij het pushen van contact data naar Procurios.';
-  $debug_data = array(
-    'webfromsync_debug_info' => empty($debug_info) ? '' : $debug_info,
-    'data' => empty($data) ? '' : $data,
-    'data object' => empty($object) ? '' : $object,
-    'api form id' => empty($form_id) ? '' : $form_id,
-    'validation result' => empty($validation_result) ? '' : $validation_result,
-    'push result' => empty($push_result) ? '' : $push_result,
-    'error' => empty($error) ? '' : $error,
-  );
-  procpush_error($error_message, $debug_data);
-  return $error;
+  procpush_error($error_message, $debug_info);
+  return FALSE;
 }
 
 /**

@@ -7,18 +7,24 @@ function procpush_settings_form($form, &$form_state) {
   $values = isset($form_state['values']) ? $form_state['values'] : array();
   $storage = &$form_state['storage'];
 
+  $registration_form_fields = procapi_registration_get_fields();
+  $profile_form_fields = procapi_profile_get_fields();
+
+  if ($registration_form_fields !== $profile_form_fields) {
+    drupal_set_message('The registration and profile api have different fields! This should be fixed in Procurios.', 'warning');
+  }
 
   $form['#prefix'] = '<div id="procpush_ajax_form">';
   $form['#suffix'] = '</div>';
 
   // Get target forms from procurios.
-  $api_forms_list = procapi_registration_get_forms();
-  $form['procpush_api_form'] = array(
+  $api_registration_form_list = procapi_registration_get_forms();
+  $form['procpush_api_registration_form'] = array(
     '#type' => 'select',
-    '#title' => 'Kies het procurios API formulier',
-    '#name' => 'procpush_api_form',
-    '#options' => $api_forms_list,
-    '#default_value' => variable_get('procpush_api_form'),
+    '#title' => 'Kies het procurios API registratie formulier voor het inschieten van nieuwe contacten',
+    '#name' => 'procpush_api_registration_form',
+    '#options' => $api_registration_form_list,
+    '#default_value' => $registration_form_id,
     '#required' => TRUE,
     '#ajax' => array(
       'wrapper' => 'procpush_ajax_form',
@@ -26,14 +32,28 @@ function procpush_settings_form($form, &$form_state) {
     ),
   );
 
-  $form_id = variable_get('procpush_api_form', '');
-  if (!empty($form_id)) {
+  // Get target forms from procurios.
+  $api_profile_form_list = procapi_profile_get_forms();
+  $form['procpush_api_profile_form'] = array(
+    '#type' => 'select',
+    '#title' => 'Kies het procurios API profiel formulier voor het updaten van bestaande contacten',
+    '#name' => 'procpush_api_profile_form',
+    '#options' => $api_profile_form_list,
+    '#default_value' => $profile_form_id,
+    '#required' => TRUE,
+    '#ajax' => array(
+      'wrapper' => 'procpush_ajax_form',
+      'callback' => 'procpush_ajax_form',
+    ),
+  );
+
+  if (!empty($registration_form_id)) {
     $form['field_mapping'] = array(
       '#type' => 'fieldset',
       '#title' => 'Veld mapping',
     );
-    $procpush_fields = procpush_data_fields();
-    $procurios_fields = procapi_registration_get_fields($form_id);
+    $procpush_fields = procpush_data_fields_flat_list();
+    $procurios_fields = procapi_registration_get_fields();
     foreach ($procpush_fields as $procpush_field_key => $procpush_field_title) {
       $form['field_mapping']['procpush_field_' . $procpush_field_key . '_mapping'] = array(
         '#type' => 'select',
@@ -63,7 +83,8 @@ function procpush_settings_form_validate($form, &$form_state) {
 
   // Store values.
   foreach (array(
-    'procpush_api_form',
+    'procpush_api_registration_form',
+    'procpush_api_profile_form',
   ) as $form_key) {
     if (!empty($values[$form_key])) {
       variable_set($form_key, $values[$form_key]);
