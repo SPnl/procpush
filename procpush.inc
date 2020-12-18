@@ -9,7 +9,7 @@ function procpush_check_submission_sufficient($data) {
     return TRUE;
   }
 
-  if (!empty($data['last_name'])) {
+  if (!empty($data['last_name']) || !empty($data['first_name'])) {
     if (!empty($data['email']) || !empty($data['fixed_phone']) || !empty($data['mobile_phone']) || procpush_check_address_sufficient($data)) {
       return TRUE;
     }
@@ -39,7 +39,7 @@ function procpush_create_data_object($data) {
 
   // Get form schema to validate field values.
   $api_schema_raw = procapi_registration_get_form_schema();
-  $api_properties = $api_schema_raw[$form_id]['properties'];
+  $api_properties = $api_schema_raw['properties'];
 
   // SP Actief.
   if (!empty($data['sp_active'])) {
@@ -92,6 +92,15 @@ function procpush_create_data_object($data) {
       }
     }
   }
+
+  // Overwrite.
+  if (isset($data['overwrite'])) {
+    $object['overwrite'] = empty($data['overwrite']) ? TRUE : FALSE;
+  }
+  // Relation id.
+  if (!empty($data['relation_id'])) {
+    $object['relationId'] = $data['relation_id'];
+  }
   return $object;
 }
 
@@ -124,252 +133,17 @@ function procpush_data_fields_flat_list() {
   return $flat_fields;
 }
 
-function procpush_push_existing_contact($data, &$debug_info) {
-  $error = FALSE;
-  if (!empty($data)) {
-    // Store non profile data.
-    $relation_id = $data['relation_id'];
-    unset ($data['relation_id']);
-    $selections = empty($data['selections']) ? array() : $data['selections'];
-    unset ($data['selections']);
-    $overwrite = empty($data['overwrite']) ? FALSE : TRUE;
-    unset ($data['overwrite']);
-
-    // Get profile.
-    if ($profile = procapi_profile_get_relation_profile($relation_id)) {
-      // Create data object.
-      $data_object = procpush_create_data_data_object($data);
-      if (!empty($data_object)) {
-        // Select what data needs to be updated by comparing existing data with new data.
-        if ($update_data_object = procpush_get_update_data_object($data_object, $profile)) {
-          // Get api form id.
-          $form_id = variable_get('procpush_api_profile_form');
-          if (!empty($form_id)) {
-            $debug_info['push_data_object_original'] = $data_object;
-            $debug_info['push_data_object_updated'] = $data_object;
-            // Push data_object to Procurios.
-            if (procapi_profile_update_relation($relation_id, $update_data_object)) {
-              if (!empty($data['selections'])) {
-                $selection_error = FALSE;
-                if (!procpush_add_relation_to_selections($relation_id, $selections, $selection_error)) {
-                  $error = $selection_error;
-                }
-              }
-            }
-            else {
-              $error = 'Error updating relation.';
-            }
-          }
-          else {
-            $error = 'Api form not found.';
-          }
-        }
-        else {
-          $error = 'No data to update found.';
-        }
-      }
-      else {
-        $error = 'Data data_object empty.';
-      }
-    }
-    else {
-      $error = 'Error retrieving profile data from api.';
-    }
-  }
-  else {
-    $error = 'No data.';
-  }
-
-
-  if ($error === FALSE) {
-    return $relation_id;
-  }
-  $debug_info['push_new_contact_error'] = $error;
-  return FALSE;
-}
-
-/**
- * Compares profile data with new data, and returns update object.
- */
-function procpush_get_update_data_object($data, $data_object, $profile) {
-  $mapping = variable_get('procpush_field_mapping');
-  // Map profile to data format.
-  $data_keys = array(
-    'first_name',
-    'middle_name',
-    'last_name',
-    'email',
-    'fixed_phone',
-    'mobile_phone',
-    'street',
-    'house_number',
-    'house_number_addition',
-    'postal_code',
-    'locality',
-  );
-  foreach ($data_keys as $data_key) {
-    $object_key_raw = $mapping[$data_key];
-    $split_pos = strpos($object_key_raw, '|');
-    if ($split_pos === FALSE) {
-      $object_key = $object_key_raw;
-      $object_base_keys[] = $object_key;
-      $profile_data[$data_key] = $profile[$object_key];
-    }
-    else {
-      $object_base_key = substr($object_key_raw, 0, $split_pos);
-      $object_base_keys[] = $object_base_key;
-      $object_top_key = substr($object_key_raw, $split_pos + 1);
-      $profile_data[$data_key] = $profile[$object_base_key][$object_top_key];
-      if (in_array($data_key, array('house_number', 'street', 'postal_code', 'locality'))) {
-        $address_object_base_key = $object_base_key;
-      }
-    }
-  }
-  
-  if (!empty($data['memberships'])) {
-    // Member.
-    if (empty($data['overwrite'])) {
-      // Do not update any person information fields.
-      foreach ($object_base_keys as $object_base_key) {
-        unset($data_object[$object_base_key]);
-      }
-    }
-  }
-  else {
-    // Compare person information, and save best.
-    // Name.
-    $update_name = TRUE;
-    $data_name_keys = array('first_name', 'middle_name', 'last_name');
-    foreach ($data_name_keys as $data_key) {
-      $object_key = $mapping[$data_key];
-      if (empty($data_object[$object_key]) && !empty($profile[$object_key])) {
-        $update_name = FALSE;
-      }
-    }
-    if (!$update_name) {
-      // Do not overwrite name.
-      foreach ($data_name_keys as $data_key) {
-        $object_key = $mapping[$data_key];
-        unset($data_object[$object_key]);
-      }
-    }
-    // Address.
-    if (!empty($address_object_base_key)) {
-      $profile_score = procpush_score_address_data($profile_data);
-      $data_score = procpush_score_address_data($data);
-      if ($profile_score > $data_score) {
-        // Do not overwrite address.
-        unset($data_object[$address_base_object_key]);
-      }
-    }
-    // Email and phone fields will be overwritten without tests.
-  }
-  return $data_object;
-}
-
-function procpush_score_address_data($data) {
-  $score_tests = array(
-    'full' => array(
-      array(
-        'house_number',
-        'postal_code',
-      ),
-      array(
-        'house_number',
-        'street_name',
-        'locality',
-      ),
-    ),
-    'postal_code' => array(
-      array(
-        'postal_code',
-      ),
-    ),
-  );
-  foreach ($score_tests as $test => $test_options) {
-    $test_results[$test] = TRUE;
-    foreach ($test_options as $data_keys) {
-      foreach ($data_keys as $data_key) {
-        if (empty($data[$data_key])) {
-          $test_results[$test] = FALSE;
-        }
-      }
-    }
-  }
-  if ($test_results['full']) {
-    return 3;
-  }
-  elseif ($test_results['postal_code']) {
-    return 2;
-  }
-  return 1;
-}
-
-function procpush_push_new_contact($data, &$debug_info) {
-  $error = FALSE;
-  if (!empty($data)) {
-    // Create data data_object.
-    $data_object = procpush_create_data_data_object($data);
-    if (!empty($data_object)) {
-      // Get api form id.
-      $form_id = variable_get('procpush_api_registration_form');
-      if (!empty($form_id)) {
-        // Validate data_object.
-        if (procapi_registration_validate_data_object($data_object)) {
-          $debug_info['push_data_object'] = $data_object;
-          // Push data_object to Procurios.
-          if ($registration_id = procapi_registration_push_data_object($data_object)) {
-            // Get relation id.
-            if ($relation_id = procapi_registration_get_relation_id($registration_id)) {
-              if (!empty($data['selections'])) {
-                $selection_error = FALSE;
-                if (!procpush_add_relation_to_selections($relation_id, $data['selections'], $selection_error)) {
-                  $error = $selection_error;
-                }
-              }
-            }
-            else {
-              $error = 'Error retrieving relation id.';
-            }
-          }
-          else {
-            $error = 'Error pushing registration data.';
-          }
-        }
-        else {
-          $error = 'data_object validation failed.';
-        }
-      }
-      else {
-        $error = 'Api form not found.';
-      }
-    }
-    else {
-      $error = 'Data data_object empty.';
-    }
-  }
-  else {
-    $error = 'No data.';
-  }
-
-  if ($error === FALSE) {
-    return $relation_id;
-  }
-  $debug_info['push_new_contact_error'] = $error;
-  return FALSE;
-}
-
 /**
  * Add / remove relation to / from selection.
  */
-function procpush_add_relation_to_selections($relation_id, $selections, &$error) {
-  $error = '';
+function procpush_add_relation_to_selections($relation_id, $selections) {
+  $error = FALSE;
   if (!empty($selections['add'])) {
     // Add contact to selections.
     foreach ($selections['add'] as $selection_id) {
       // Add relation to selection.
-      if (procapi_selection_add_relations($selection_id, array($relation_id)) == FALSE) {
-        $error .= 'Error adding relation (' . $relation_id . ') to selection (' . $selection_id . '). ';
+      if (procapi_selection_add_relations($selection_id, array($relation_id)) === FALSE) {
+        $error = TRUE;
       }
     }
   }
@@ -377,15 +151,15 @@ function procpush_add_relation_to_selections($relation_id, $selections, &$error)
     // Remove contact from selections.
     foreach ($selections['remove'] as $selection_id) {
       // Remove relation to selection.
-      if (procapi_selection_remove_relations($selection_id, array($relation_id)) == FALSE) {
-        $error .= 'Error removing relation (' . $relation_id . ') from selection (' . $selection_id . '). ';
+      if (procapi_selection_remove_relations($selection_id, array($relation_id)) === FALSE) {
+        $error = TRUE;
       }
     }
   }
-  if ($error == FALSE) {
-    return TRUE;
+  if ($error) {
+    return FALSE;
   }
-  return FALSE;
+  return TRUE;
 }
 
 /**
@@ -419,7 +193,7 @@ function procpush_fix_data(&$data) {
   // Convert phone to fixed_phone or mobile_phone.
   if (!empty($data['phone']) && empty($data['fixed_phone'])) {
     $phone_stripped = preg_replace("/[^0-9]/", "", $data['phone']);
-    if (preg_match('^(00)?310?6([1-5]|8)[0-9]{7}$', $phone_stripped) === 1) {
+    if (preg_match('/^(00)?310?6([1-5]|8)[0-9]{7}$/', $phone_stripped) === 1) {
       $data['mobile_phone'] = $data['phone'];
     }
     else {
@@ -428,7 +202,7 @@ function procpush_fix_data(&$data) {
   }
   unset($data['phone']);
 
-  $data = procpush_validate_data($data);
+  procpush_validate_data($data);
 
   return $data;
 }
@@ -438,7 +212,7 @@ function procpush_fix_data(&$data) {
  */
 function procpush_basic_cleanup(&$data) {
   $emojiregex = '%([*#0-9](?>\\xEF\\xB8\\x8F)?\\xE2\\x83\\xA3|\\xC2[\\xA9\\xAE]|\\xE2..(\\xF0\\x9F\\x8F[\\xBB-\\xBF])?(?>\\xEF\\xB8\\x8F)?|\\xE3(?>\\x80[\\xB0\\xBD]|\\x8A[\\x97\\x99])(?>\\xEF\\xB8\\x8F)?|\\xF0\\x9F(?>[\\x80-\\x86].(?>\\xEF\\xB8\\x8F)?|\\x87.\\xF0\\x9F\\x87.|..(\\xF0\\x9F\\x8F[\\xBB-\\xBF])?|(((?<zwj>\\xE2\\x80\\x8D)\\xE2\\x9D\\xA4\\xEF\\xB8\\x8F\k<zwj>\\xF0\\x9F..(\k<zwj>\\xF0\\x9F\\x91.)?|(\\xE2\\x80\\x8D\\xF0\\x9F\\x91.){2,3}))?))%';
-  $fields = procpush_get_data_fields();
+  $fields = procpush_data_fields();
   foreach ($fields as $key => $field_info) {
     if (isset($data[$key])) {
       if ($field_info['type'] == 'string') {
@@ -716,15 +490,13 @@ function procpush_middle_names() {
  * Validates data.
  */
 function procpush_validate_data(&$data) {
-  $validated_data = array();
-  $fields = procpush_get_data_fields();
-  // Set max length for data.
+  $fields = procpush_data_fields();
   foreach ($fields as $key => $field_info) {
     if (isset($data[$key])) {
       if (!empty($data[$key])) {
         // Validate data with special function.
         if (function_exists('procpush_valid_' . $key)) {
-          call_user_func('procpush_valid_' . $key, $data[$key]);
+          call_user_func('procpush_valid_' . $key, $data);
         }
       }
       // Remove empty data keys.
@@ -733,17 +505,16 @@ function procpush_validate_data(&$data) {
       }
     }
   }
-  return $validated_data;
 }
 
 /**
  * Check if relation id is valid.
  */
-function procpush_valid_relation_id(&$relation_id) {
-  $relation_id = preg_replace('/[^0-9]/s', '', $relation_id);
-  if (!empty($relation_id)) {
-    if (!is_numeric($relation_id) || intval($relation_id) != $relation_id || $relation_id <= 0) {
-      $relation_id = '';
+function procpush_valid_relation_id(&$data) {
+  $data['relation_id'] = preg_replace('/[^0-9]/s', '', $data['relation_id']);
+  if (!empty($data['relation_id'])) {
+    if (!is_numeric($data['relation_id']) || intval($data['relation_id']) != $data['relation_id'] || $data['relation_id'] <= 0) {
+      $data['relation_id'] = '';
     }
   }
 }
@@ -751,32 +522,32 @@ function procpush_valid_relation_id(&$relation_id) {
 /**
  * Check if first name is valid.
  */
-function procpush_valid_first_name(&$first_name) {
-  $first_name = ucwords(strtolower($first_name));
+function procpush_valid_first_name(&$data) {
+  $data['first_name'] = ucwords(strtolower($data['first_name']));
 }
 
 /**
  * Check if middle name is valid.
  */
-function procpush_valid_middle_name(&$middle_name) {
-  $middle_name = strtolower($middle_name);
+function procpush_valid_middle_name(&$data) {
+  $data['middle_name'] = strtolower($data['middle_name']);
 }
 
 /**
  * Check if last name is valid.
  */
-function procpush_valid_last_name(&$last_name) {
-  $last_name = ucwords(strtolower($last_name));
+function procpush_valid_last_name(&$data) {
+  $data['last_name'] = ucwords(strtolower($data['last_name']));
 }
 
 /**
  * Check if email is valid.
  */
-function procpush_valid_email(&$email) {
-  if (!valid_email_address($email)) {
-    $email = '';
+function procpush_valid_email(&$data) {
+  if (!valid_email_address($data['email'])) {
+    $data['email'] = '';
   }
-  $email = strtolower($email);
+  $data['email'] = strtolower($data['email']);
 }
 
 /**
@@ -822,84 +593,85 @@ function procpush_valid_telephone(&$telephone) {
       $telephone = substr_replace($telephone, '0', 0, 5);
     }
   }
+  return $telephone;
 }
 
 /**
  * Check if phone is valid.
  */
-function procpush_valid_mobile_phone(&$phone) {
-  procpush_valid_phone($phone);
+function procpush_valid_mobile_phone(&$data) {
+  $data['mobile_phone'] = procpush_valid_telephone($data['mobile_phone']);
 }
 
 /**
  * Check if phone is valid.
  */
-function procpush_valid_fixed_phone(&$phone) {
-  procpush_valid_phone($phone);
+function procpush_valid_fixed_phone(&$data) {
+  $data['fixed_phone'] = procpush_valid_telephone($data['fixed_phone']);
 }
 
 /**
  * Check if street is valid.
  */
-function procpush_valid_street(&$street) {
-  $street = ucfirst($street);
+function procpush_valid_street(&$data) {
+  $data['street'] = ucfirst($data['street']);
 }
 
 /**
  * Check if house number is valid.
  */
-function procpush_valid_house_number(&$house_number) {
-  $house_number = preg_replace('@[^0-9]@', '', $house_number);
+function procpush_valid_house_number(&$data) {
+  $data['house_number'] = preg_replace('@[^0-9]@', '', $data['house_number']);
   $regex = "@^[0-9]{1,5}([^0-9].*)?$@";
-  if (!preg_match($regex, $house_number)) {
-    $house_number = '';
+  if (!preg_match($regex, $data['house_number'])) {
+    $data['house_number'] = '';
   }
 }
 
 /**
  * Check if house number addition is valid.
  */
-function procpush_valid_house_number_addition(&$house_number_addition) {
-  if (!strlen($house_number_addition) > 0 || strlen($house_number_addition) > 16) {
-    $house_number_addition = '';
+function procpush_valid_house_number_addition(&$data) {
+  if (!strlen($data['house_number_addition']) > 0 || strlen($data['house_number_addition']) > 16) {
+    $data['house_number_addition'] = '';
   }
 }
 
 /**
  * Check if postal code is valid.
  */
-function procpush_valid_postal_code(&$postal_code) {
-  if (preg_match('/^[1-9][0-9]{3} ?[a-zA-Z]{2}$/', $postal_code)) {
+function procpush_valid_postal_code(&$data) {
+  if (preg_match('/^[1-9][0-9]{3} ?[a-zA-Z]{2}$/', $data['postal_code'])) {
     // Nederlandse postcode.
-    $postal_code = strtoupper($postal_code);
-    $postal_code = str_replace(' ', '', $postal_code);
+    $data['postal_code'] = strtoupper($data['postal_code']);
+    $data['postal_code'] = str_replace(' ', '', $data['postal_code']);
   }
 }
 
 /**
  * Check if locality is valid.
  */
-function procpush_valid_locality(&$locality) {
-  $locality = strtoupper($locality);
+function procpush_valid_locality(&$data) {
+  $data['locality'] = strtoupper($data['locality']);
 }
 
 /**
  * Check if selections is valid.
  */
-function procpush_valid_selections(&$selections) {
-  if (!is_array($selections)) {
-    $selections = array();
+function procpush_valid_selections(&$data) {
+  if (!is_array($data['selections'])) {
+    $data['selections'] = array();
   }
   else {
     foreach (array('add', 'remove') as $type) {
-      if (!empty($selections[$type])) {
-        if (!is_array($selections[$type])) {
-          unset($selections[$type]);
+      if (!empty($data['selections'][$type])) {
+        if (!is_array($data['selections'][$type])) {
+          unset($data['selections'][$type]);
         }
       }
     }
-    if (empty($selections['add']) && empty($selections['remove'])) {
-      $selections = array();
+    if (empty($data['selections']['add']) && empty($data['selections']['remove'])) {
+      $data['selections'] = array();
     }
   }
 }
@@ -907,13 +679,13 @@ function procpush_valid_selections(&$selections) {
 /**
  * Check if sp_active is valid.
  */
-function procpush_valid_sp_active(&$sp_active) {
-  if (!is_array($sp_active)) {
+function procpush_valid_sp_active(&$data) {
+  if (!is_array($data['sp_active'])) {
     $selections = array();
   }
   else {
-    if (empty($sp_active['active']) && empty($sp_active['activities'])) {
-      $sp_active = array();
+    if (empty($data['sp_active']['active']) && empty($data['sp_active']['activities'])) {
+      $data['sp_active'] = array();
     }
   }
 }
@@ -921,17 +693,17 @@ function procpush_valid_sp_active(&$sp_active) {
 /**
  * Check if sp_work_and_int is valid.
  */
-function procpush_valid_sp_work_and_int(&$sp_work_and_int) {
-  if (!is_array($sp_work_and_int)) {
-    $sp_work_and_int = array();
+function procpush_valid_sp_work_and_int(&$data) {
+  if (!is_array($data['sp_work_and_int'])) {
+    $data['sp_work_and_int'] = array();
   }
   else {
     if (
-      empty($sp_work_and_int['main_task']) &&
-      empty($sp_work_and_int['industrial_sector']) &&
-      empty($sp_work_and_int['occupational_group'])
+      empty($data['sp_work_and_int']['main_task']) &&
+      empty($data['sp_work_and_int']['industrial_sector']) &&
+      empty($data['sp_work_and_int']['occupational_group'])
     ) {
-      $sp_work_and_int = array();
+      $data['sp_work_and_int'] = array();
     }
   }
 }
@@ -939,6 +711,6 @@ function procpush_valid_sp_work_and_int(&$sp_work_and_int) {
 /**
  * Check if overwrite is valid.
  */
-function procpush_valid_overwrite($overwrite) {
-  $overwrite = empty($overwrite) ? FALSE : TRUE;
+function procpush_valid_overwrite($data) {
+  $data['overwrite'] = empty($data['overwrite']) ? FALSE : TRUE;
 }
