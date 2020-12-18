@@ -73,6 +73,14 @@ function procpush_data_fields() {
       'title' => 'Telefoon mobiel',
       'type' => 'string',
     ),
+    'fixed_phone_work' =>  array(
+      'title' => 'Telefoon vast werk',
+      'type' => 'string',
+    ),
+    'mobile_phone_work' =>  array(
+      'title' => 'Telefoon mobiel werk',
+      'type' => 'string',
+    ),
     'street' =>  array(
       'title' => 'Straat',
       'type' => 'string',

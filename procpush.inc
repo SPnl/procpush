@@ -110,14 +110,14 @@ function procpush_error($error_message, $debug_data) {
   drupal_mail('spwebformsync', 'error', 'tdgraaff@sp.nl', language_default(), $message, 'webmaster@sp.nl');
 }
 
-function procpush_datafields_flat_list() {
+function procpush_data_fields_flat_list() {
   $flat_fields = &drupal_static(__FUNCTION__);
   if (!isset($flat_fields)) {
     $flat_fields = array();
-    $fields = procpush_datafields();
+    $fields = procpush_data_fields();
     foreach ($fields as $key => $values) {
       if ($values['type'] == 'string') {
-        $flat_fields[$key] = $values;
+        $flat_fields[$key] = $values['title'];
       }
     }
   }
