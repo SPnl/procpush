@@ -95,7 +95,7 @@ function procpush_create_data_object($data) {
 
   // Overwrite.
   if (isset($data['overwrite'])) {
-    $object['overwrite'] = empty($data['overwrite']) ? TRUE : FALSE;
+    $object['class_2479_overwrite'] = empty($data['overwrite']) ? FALSE : TRUE;
   }
 
   return $object;
