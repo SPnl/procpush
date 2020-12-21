@@ -97,10 +97,7 @@ function procpush_create_data_object($data) {
   if (isset($data['overwrite'])) {
     $object['overwrite'] = empty($data['overwrite']) ? TRUE : FALSE;
   }
-  // Relation id.
-  if (!empty($data['relation_id'])) {
-    $object['relationId'] = $data['relation_id'];
-  }
+
   return $object;
 }
 
