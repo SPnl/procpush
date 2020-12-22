@@ -183,7 +183,7 @@ function procpush_fix_data(&$data) {
 
   // Split house_number_and_addition when available.
   if (!empty($data['house_number_and_addition']) && empty($data['house_number'])) {
-    $split_house_number = procapi_split_house_number_and_addition($data['house_number_and_addition']);    
+    $split_house_number = procpush_split_house_number_and_addition($data['house_number_and_addition']);    
     if (!empty($split_house_number['house_number'])) {
       $data['house_number'] = $split_house_number['house_number'];
       $data['house_number_addition'] = empty($split_house_number['house_number_addition']) ? '' : $split_house_number['house_number_addition'];
