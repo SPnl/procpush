@@ -190,7 +190,7 @@ function procpush_fix_data(&$data) {
   // Convert phone to fixed_phone or mobile_phone.
   if (!empty($data['phone']) && empty($data['fixed_phone'])) {
     $phone_stripped = preg_replace("/[^0-9]/", "", $data['phone']);
-    if (preg_match('/^(00)?310?6([1-5]|8)[0-9]{7}$/', $phone_stripped) === 1) {
+    if (preg_match('/^(00)?(31)?0?6([1-5]|8)[0-9]{7}$/', $phone_stripped) === 1) {
       $data['mobile_phone'] = $data['phone'];
     }
     else {
