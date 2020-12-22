@@ -98,6 +98,10 @@ function procpush_create_data_object($data) {
     $object['class_2479_overwrite'] = empty($data['overwrite']) ? FALSE : TRUE;
   }
 
+  if (procpush_check_address_sufficient($data)) {
+    $object['class_1_relation_address_0']['country'] = 'NL';
+  }
+
   return $object;
 }
 
@@ -336,7 +340,7 @@ function procpush_split_name($name) {
 /**
  * Checks if the address data is sufficient.
  */
-function propush_check_address_sufficient($data) {
+function procpush_check_address_sufficient($data) {
   // Check for Testlaan (street) 1 (house_number), Amsterdam (locality)
   if (!empty($data['street']) && !empty($data['house_number']) && !empty($data['locality'])) {
     return TRUE;
@@ -364,123 +368,6 @@ function procpush_split_house_number_and_addition($house_number) {
     }
   }
   return FALSE;
-}
-
-/**
- * Split name.
- */
-function propush_split_name($name) {
-  $matches = array();
-  $name = trim($name);
-  $name = trim($name, '.,');
-
-  // Remove comma from name.
-  $comma_pos = strpos($name, ',');
-  if ($comma_pos !== FALSE) {
-    $first_half = trim(substr($name, 0, $comma_pos));
-    $last_half = trim(substr($name, $comma_pos + 1));
-    $name = $last_half . ' ' . $first_half;
-  }
-
-  // Replace terms.
-  $replace = array(
-    'v' => 'van',
-    'v.' => 'van',
-    'vd' => 'van de',
-    'vd.' => 'van de',
-    'v.d.' => 'van de',
-    'v/d' => 'van de',
-  );
-  foreach ($replace as $orig => $new) {
-    if (strpos($name, ' ' . $orig . ' ') !== FALSE) {
-      $name = str_replace($orig, $new, $name);
-    }
-  }
-
-  // Regexes for title and middle names.
-  $titles_regex = 'Mr|mr|Mevr|mevr|Dhr|dhr|Ir|ir|Ing|ing|Bc|bc|Ms|ms|Drs|drs|Dr|dr';
-
-  $middle_names_array = procapi_middle_names();
-  $middle_names_regex = implode('|', $middle_names_array);
-
-  // Split name on middle_name.
-  $regex = "@^(?'title'(\b(" . $titles_regex . ")\b\.?\s)?)(?'first_name'(([A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-\.]+)\s*)+?)(?'middle_name'(\b(" . $middle_names_regex . ")\b\s*))(?'last_name'(\b[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'][a-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-]+\s?)+)$@";
-  $result = preg_match($regex, $name, $matches);
-  if (!preg_match($regex, $name, $matches)) { 
-    // Split name on middle name, last name first.
-    $regex = "@^(?'title'(\b(" . $titles_regex . ")\b\.?\s)?)(?'last_name'(\b[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'][A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-]+\s?)+),?\s(?'first_name'(([A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-\.]+)\s*)+?)(?'middle_name'(\b(" . $middle_names_regex . ")\b\s*))$@";
-    $result = preg_match($regex, $name, $matches);
-    if (!preg_match($regex, $name, $matches)) {
-      // Split name without middle_name in first name and last name(s).
-      $regex = "@^(?'title'(\b(" . $titles_regex . ")\b\.?\s)?)(?'first_name'(([A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-\.]+)\s*)+?)(?'last_name'(\b[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'][A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-]+\s?)+)$@";
-      $result = preg_match($regex, $name, $matches);
-      if (!preg_match($regex, $name, $matches)) {
-        // Split name in first name and last name, last name first.
-        $regex = "@^(?'title'(\b(" . $titles_regex . ")\b\.?\s)?)(?'last_name'(\b[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'][A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-]+\s?)+),?\s+(?'first_name'((([A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ']\.)+)\s*)+?)$@";
-        $result = preg_match($regex, $name, $matches);
-        if (!preg_match($regex, $name, $matches)) {
-          // Check if only first name.
-          $regex = "@^(?'first_name'([A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'][a-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-]+))$@";
-          $result = preg_match($regex, $name, $matches);
-          if (!preg_match($regex, $name, $matches)) {
-            // No match found.
-            return FALSE;
-          }
-        }
-      }
-    }
-  }
-  // Regexes for title and middle names.
-  $titles_regex = 'Mr|mr|Mevr|mevr|Dhr|dhr|Ir|ir|Ing|ing|Bc|bc|Ms|ms|Drs|drs|Dr|dr';
-
-  $middle_names_array = procapi_middle_names();
-  $middle_names_regex = implode('|', $middle_names_array);
-
-  // Split name on middle_name.
-  $regex = "@^(?'title'(\b(" . $titles_regex . ")\b\.?\s)?)(?'first_name'(([A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-\.]+)\s*)+?)(?'middle_name'(\b(" . $middle_names_regex . ")\b\s*))(?'last_name'(\b[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'][a-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-]+\s?)+)$@";
-  $result = preg_match($regex, $name, $matches);
-  if (!preg_match($regex, $name, $matches)) { 
-    // Split name on middle name, last name first.
-    $regex = "@^(?'title'(\b(" . $titles_regex . ")\b\.?\s)?)(?'last_name'(\b[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'][A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-]+\s?)+),?\s(?'first_name'(([A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-\.]+)\s*)+?)(?'middle_name'(\b(" . $middle_names_regex . ")\b\s*))$@";
-    $result = preg_match($regex, $name, $matches);
-    if (!preg_match($regex, $name, $matches)) {
-      // Split name without middle_name in first name and last name(s).
-      $regex = "@^(?'title'(\b(" . $titles_regex . ")\b\.?\s)?)(?'first_name'(([A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-\.]+)\s*)+?)(?'last_name'(\b[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'][A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-]+\s?)+)$@";
-      $result = preg_match($regex, $name, $matches);
-      if (!preg_match($regex, $name, $matches)) {
-        // Split name in first name and last name, last name first.
-        $regex = "@^(?'title'(\b(" . $titles_regex . ")\b\.?\s)?)(?'last_name'(\b[A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'][A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-]+\s?)+),?\s+(?'first_name'((([A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ']\.)+)\s*)+?)$@";
-        $result = preg_match($regex, $name, $matches);
-        if (!preg_match($regex, $name, $matches)) {
-          // Check if only first name.
-          $regex = "@^(?'first_name'([A-ZÀÈÌÒÙÁÉÍÓÚÝÂÊÎÔÛÃÑÕÄËÏÖÜŸÇÅa-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'][a-zàèìòùáéíóúýâêîôûãñõäëïöü¡¿çãñõ'\-]+))$@";
-          $result = preg_match($regex, $name, $matches);
-          if (!preg_match($regex, $name, $matches)) {
-            // No match found.
-            return FALSE;
-          }
-        }
-      }
-    }
-  }
-  // Set first character uppercase.
-  $parts = array(
-    'first_name',
-    'last_name',
-  );
-  foreach ($parts as $part) {   
-    if (isset($matches[$part])) {
-      $matches[$part] = trim($matches[$part]);
-      if (!empty($matches[$part])) {
-        $matches[$part] = ucfirst($matches[$part]);
-      }
-    }
-  }
-  if (empty($matches['last_name']) && !empty($matches['first_name'])) {
-    $matches['last_name'] = $matches['first_name'];
-    $matches['first_name'] = '';
-   }
-  return $matches;
 }
 
 /**
