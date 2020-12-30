@@ -25,6 +25,19 @@ function procpush_schema() {
     ),
   );
 
+  $schema['procpush_first_names'] = array(
+    'description' => 'List with first names.',
+    'fields' => array(
+      'first_name' => array(
+        'description' => 'First name.',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+    ),
+    'indexes' => array(
+      'first_name' => array('first_name'),
+    ),
+  );
   return $schema;
 }
 
@@ -36,5 +49,31 @@ function procpush_update_7001() {
   if (!db_table_exists('procpush_id_map')) {
     $schema = procpush_schema();
     db_create_table('procpush_id_map', $schema['procpush_id_map']);
+  }
+}
+
+/**
+ * Adds first names table.
+ */
+function procpush_update_7002() {
+  if (!db_table_exists('procpush_first_names')) {
+    $schema = procpush_schema();
+    db_create_table('procpush_first_names', $schema['procpush_first_names']);
+    // Import names.
+    $row = 1;
+    $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'procpush') . '/procpush_first_names.csv';
+    if (($handle = fopen($file, 'r')) !== FALSE) {
+      while (($data = fgetcsv($handle, 1000)) !== FALSE) {
+        $names[] = reset($data);
+      }
+      fclose($handle);
+    }
+    foreach ($names as $name) {
+      db_insert('procpush_first_names')
+        ->fields(array(
+          'first_name' => $name,
+        ))
+        ->execute();
+    }
   }
 }
