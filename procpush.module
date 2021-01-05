@@ -36,94 +36,117 @@ function procpush_data_fields() {
     'relation_id' =>  array(
       'title' => 'Relatienummer',
       'type' => 'string',
+      'meta' => TRUE,
     ),
     'contact_number' => array(
       'title' => 'Contact nummer',
       'type' => 'string',
+      'meta' => TRUE,
     ),
     'overwrite' =>  array(
       'title' => 'Overschrijven',
       'type' => 'boolean',
+      'meta' => TRUE,
     ),
     'name' =>  array(
       'title' => 'Gehele naam',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'first_name' =>  array(
       'title' => 'Voornaam',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'middle_name' =>  array(
       'title' => 'Tussenvoegsel',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'last_name' =>  array(
       'title' => 'Achternaam',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'email' =>  array(
       'title' => 'E-mail',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'phone' =>  array(
       'title' => 'Telefoon',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'fixed_phone' =>  array(
       'title' => 'Telefoon vast',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'mobile_phone' =>  array(
       'title' => 'Telefoon mobiel',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'fixed_phone_work' =>  array(
       'title' => 'Telefoon vast werk',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'mobile_phone_work' =>  array(
       'title' => 'Telefoon mobiel werk',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'street' =>  array(
       'title' => 'Straat',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'house_number_and_addition' =>  array(
       'title' => 'Huisnummer inclusief eventuele toevoeging',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'house_number' =>  array(
       'title' => 'Huisnummer',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'house_number_addition' =>  array(
       'title' => 'Huisnummer toevoeging',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'postal_code' =>  array(
       'title' => 'Postcode',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'locality' =>  array(
       'title' => 'Plaats',
       'type' => 'string',
+      'meta' => FALSE,
     ),
     'selections' =>  array(
       'title' => 'Selecties',
       'type' => 'array',
+      'meta' => FALSE,
     ),
     'sp_active' =>  array(
       'title' => 'Actief SP',
       'type' => 'array',
+      'meta' => FALSE,
     ),
     'sp_work_and_int' =>  array(
       'title' => 'Werk en interesses',
       'type' => 'array',
+      'meta' => FALSE,
     ),
     'privacy' =>  array(
       'title' => 'Privacy',
       'type' => 'array',
+      'meta' => FALSE,
     ),
   );
   return $data_fields;

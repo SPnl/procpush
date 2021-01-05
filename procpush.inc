@@ -4,12 +4,24 @@
  * Checks wether a submission contains sufficient data to create new or sync existing civi contact.
  */
 function procpush_check_submission_sufficient($data) {
+  // Check if only metadata.
+  $data_copy = $data;
+  $data_fields = procpush_data_fields();
+  foreach ($data_fields as $field_id => $field_properties) {
+    if ($field_properties['meta']) {
+      unset($data_copy[$field_id]);
+    }
+  }
+  if (empty($data_copy)) {
+    return FALSE;
+  }
+
   // Check if values are sufficient to create new or sync existing civi contact.
   if (!empty($data['relation_id'])) {
     return TRUE;
   }
 
-  if (!empty($data['last_name']) || !empty($data['first_name'])) {
+  if ((!empty($data['last_name']) && $data['last_name'] !== '.') || !empty($data['first_name'])) {
     if (!empty($data['email']) || !empty($data['fixed_phone']) || !empty($data['mobile_phone']) || procpush_check_address_sufficient($data)) {
       return TRUE;
     }
