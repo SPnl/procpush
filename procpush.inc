@@ -663,3 +663,19 @@ function procpush_valid_sp_work_and_int(&$data) {
 function procpush_valid_overwrite($data) {
   $data['overwrite'] = empty($data['overwrite']) ? FALSE : TRUE;
 }
+
+/**
+ * Get realtion id from contact number.
+ */
+function procpush_get_relation_id($contact_number) {
+  // Get relation id.
+  $relation_id = db_select('procpush_id_map', 'map')
+    ->fields('map', array('relation_id'))
+    ->condition('map.contact_number', $contact_number)
+    ->execute()
+    ->fetchField();
+  if (!empty($relation_id)) {
+    return $relation_id;
+  }
+  return FALSE;
+}
