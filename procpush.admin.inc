@@ -7,25 +7,10 @@ function procpush_settings_form($form, &$form_state) {
   $values = isset($form_state['values']) ? $form_state['values'] : array();
   $storage = &$form_state['storage'];
 
-  $registration_form_id = variable_get('procpush_api_registration_form');
+  $registration_form_id = variable_get('procapi_registration_form');
 
   $form['#prefix'] = '<div id="procpush_ajax_form">';
   $form['#suffix'] = '</div>';
-
-  // Get target forms from procurios.
-  $api_registration_form_list = procapi_registration_get_forms();
-  $form['procpush_api_registration_form'] = array(
-    '#type' => 'select',
-    '#title' => 'Kies het procurios API registratie formulier voor het inschieten van nieuwe contacten',
-    '#name' => 'procpush_api_registration_form',
-    '#options' => $api_registration_form_list,
-    '#default_value' => $registration_form_id,
-    '#required' => TRUE,
-    '#ajax' => array(
-      'wrapper' => 'procpush_ajax_form',
-      'callback' => 'procpush_ajax_form',
-    ),
-  );
 
   if (!empty($registration_form_id)) {
     $form['field_mapping'] = array(
@@ -44,6 +29,11 @@ function procpush_settings_form($form, &$form_state) {
       );
     }
   }
+  else {
+    $form['feedback'] = array(
+      '#markup' => 'Kies het registratie formulier in de instellingen de Procurios API module.',
+    );
+  }
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -52,23 +42,6 @@ function procpush_settings_form($form, &$form_state) {
   );
 
   return $form;
-}
-
-/**
- * Validate settings form.
- */
-function procpush_settings_form_validate($form, &$form_state) {
-  $values = &$form_state['values'];
-  $storage = &$form_state['storage'];
-
-  // Store values.
-  foreach (array(
-    'procpush_api_registration_form',
-  ) as $form_key) {
-    if (!empty($values[$form_key])) {
-      variable_set($form_key, $values[$form_key]);
-    }
-  }
 }
 
 /**
