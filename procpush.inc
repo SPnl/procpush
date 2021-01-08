@@ -38,7 +38,7 @@ function procpush_create_data_object($data) {
   $object = array();
   foreach ($mapping as $webformsync_key => $procurios_key) {
     $keys = explode('|', $procurios_key);
-    if (!empty($data[$webformsync_key])) {
+    if (isset($data[$webformsync_key])) {
       $md = array();
       $md[$keys[count($keys)-1]] = $data[$webformsync_key];
       for($i=count($keys)-2; $i>-1; $i--) {
@@ -106,9 +106,7 @@ function procpush_create_data_object($data) {
   }
 
   // Overwrite.
-  if (isset($data['overwrite'])) {
-    $object['class_2479_overwrite'] = empty($data['overwrite']) ? FALSE : TRUE;
-  }
+  $object['class_2479_overwrite'] = empty($data['overwrite']) ? FALSE : TRUE;
 
   if (procpush_check_address_sufficient($data)) {
     $object['class_1_relation_address_0']['country'] = 'NL';
@@ -179,6 +177,22 @@ function procpush_add_relation_to_selections($relation_id, $selections) {
  * Prepare data for Procurios.
  */
 function procpush_fix_data(&$data) {
+  // Remove phone number.
+  if (!empty($data['phone'])) {
+    $phone_stripped = preg_replace("/[^0-9]/", "", $data['phone']);
+    // Check if phone needs to be removed.
+    if (strpos($data['phone'], '[remove:') !== FALSE) {
+      // Remove phone number
+      if (preg_match('/^(00)?(31)?0?6([1-5]|8)[0-9]{7}$/', $phone_stripped)) {
+        $data['mobile_phone'] = '';
+      }
+      else {
+        $data['fixed_phone'] = '';
+      }
+      unset($data['phone']);
+    }
+  }
+
   // Remove emojis.
   procpush_basic_cleanup($data);
 
@@ -204,7 +218,7 @@ function procpush_fix_data(&$data) {
   unset($data['house_number_and_addition']);
 
   // Convert phone to fixed_phone or mobile_phone.
-  if (!empty($data['phone']) && empty($data['fixed_phone'])) {
+  if (!empty($data['phone'])) {
     $phone_stripped = preg_replace("/[^0-9]/", "", $data['phone']);
     if (preg_match('/^(00)?(31)?0?6([1-5]|8)[0-9]{7}$/', $phone_stripped) === 1) {
       $data['mobile_phone'] = $data['phone'];
@@ -442,16 +456,23 @@ function procpush_validate_data(&$data) {
   $fields = procpush_data_fields();
   foreach ($fields as $key => $field_info) {
     if (isset($data[$key])) {
-      if (!empty($data[$key])) {
+      if (strpos($key, 'phone') !== FALSE && empty($data[$key]) && !empty($data['overwrite'])) {
+        // Set fake value that will be removed in Procurios.
+        $data[$key] = '0600000000';
+      } 
+      elseif (!empty($data[$key])) {
         // Validate data with special function.
         if (function_exists('procpush_valid_' . $key)) {
           $data[$key] = call_user_func('procpush_valid_' . $key, $data[$key]);
         }
+        // Remove empty data keys.
+        if (empty($data[$key])) {
+          unset($data[$key]);
+        }
       }
-      // Remove empty data keys.
-      if (empty($data[$key])) {
-        unset($data[$key]);
-      }
+    }
+    if (empty($data[$key]) && empty($data['overwrite'])) {
+      unset($data[$key]);
     }
   }
 }
