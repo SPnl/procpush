@@ -445,7 +445,7 @@ function procpush_validate_data(&$data) {
       if (!empty($data[$key])) {
         // Validate data with special function.
         if (function_exists('procpush_valid_' . $key)) {
-          call_user_func('procpush_valid_' . $key, $data);
+          $data[$key] = call_user_func('procpush_valid_' . $key, $data[$key]);
         }
       }
       // Remove empty data keys.
@@ -459,50 +459,55 @@ function procpush_validate_data(&$data) {
 /**
  * Check if relation id is valid.
  */
-function procpush_valid_relation_id(&$data) {
-  $data['relation_id'] = preg_replace('/[^0-9]/s', '', $data['relation_id']);
-  if (!empty($data['relation_id'])) {
-    if (!is_numeric($data['relation_id']) || intval($data['relation_id']) != $data['relation_id'] || $data['relation_id'] <= 0) {
-      $data['relation_id'] = '';
+function procpush_valid_relation_id($relation_id) {
+  $relation_id = preg_replace('/[^0-9]/s', '', $relation_id);
+  if (!empty($relation_id)) {
+    if (!is_numeric($relation_id) || intval($relation_id) != $relation_id || $relation_id <= 0) {
+      $relation_id = '';
     }
   }
+  return $relation_id;
 }
 
 /**
  * Check if first name is valid.
  */
-function procpush_valid_first_name(&$data) {
-  $data['first_name'] = ucwords(strtolower($data['first_name']));
+function procpush_valid_first_name($first_name) {
+  $first_name = ucwords(strtolower($first_name));
+  return $first_name;
 }
 
 /**
  * Check if middle name is valid.
  */
-function procpush_valid_middle_name(&$data) {
-  $data['middle_name'] = strtolower($data['middle_name']);
+function procpush_valid_middle_name($middle_name) {
+  $middle_name = strtolower($middle_name);
+  return $middle_name;
 }
 
 /**
  * Check if last name is valid.
  */
-function procpush_valid_last_name(&$data) {
-  $data['last_name'] = ucwords(strtolower($data['last_name']));
+function procpush_valid_last_name($last_name) {
+  $last_name = ucwords(strtolower($last_name));
+  return $last_name;
 }
 
 /**
  * Check if email is valid.
  */
-function procpush_valid_email(&$data) {
-  if (!valid_email_address($data['email'])) {
-    $data['email'] = '';
+function procpush_valid_email($email) {
+  if (!valid_email_address($email)) {
+    $email = '';
   }
-  $data['email'] = strtolower($data['email']);
+  $email = strtolower($email);
+  return $email;
 }
 
 /**
  * Check if phone is valid.
  */
-function procpush_valid_telephone(&$telephone) {
+function procpush_valid_telephone($telephone) {
   $number_only = preg_replace('@[^0-9]@', '', $telephone);
   if (preg_match('/^((00)?31)?0?[1-9][0-9]{8}$/', $number_only)) {
     // Waarschijnlijk Nederlands telefoonnummer.
@@ -548,120 +553,131 @@ function procpush_valid_telephone(&$telephone) {
 /**
  * Check if phone is valid.
  */
-function procpush_valid_mobile_phone(&$data) {
-  $data['mobile_phone'] = procpush_valid_telephone($data['mobile_phone']);
+function procpush_valid_mobile_phone($mobile_phone) {
+  $mobile_phone = procpush_valid_telephone($mobile_phone);
+  return $mobile_phone;
 }
 
 /**
  * Check if phone is valid.
  */
-function procpush_valid_fixed_phone(&$data) {
-  $data['fixed_phone'] = procpush_valid_telephone($data['fixed_phone']);
+function procpush_valid_fixed_phone($fixed_phone) {
+  $fixed_phone = procpush_valid_telephone($fixed_phone);
+  return $fixed_phone;
 }
 
 /**
  * Check if street is valid.
  */
-function procpush_valid_street(&$data) {
-  $data['street'] = ucfirst($data['street']);
+function procpush_valid_street($street) {
+  $street = ucfirst($street);
+  return $street;
 }
 
 /**
  * Check if house number is valid.
  */
-function procpush_valid_house_number(&$data) {
-  $data['house_number'] = preg_replace('@[^0-9]@', '', $data['house_number']);
+function procpush_valid_house_number($house_number) {
+  $house_number = preg_replace('@[^0-9]@', '', $house_number);
   $regex = "@^[0-9]{1,5}([^0-9].*)?$@";
-  if (!preg_match($regex, $data['house_number'])) {
-    $data['house_number'] = '';
+  if (!preg_match($regex, $house_number)) {
+    $house_number = '';
   }
+  return $house_number;
 }
 
 /**
  * Check if house number addition is valid.
  */
-function procpush_valid_house_number_addition(&$data) {
-  if (!strlen($data['house_number_addition']) > 0 || strlen($data['house_number_addition']) > 16) {
-    $data['house_number_addition'] = '';
+function procpush_valid_house_number_addition($house_number_addition) {
+  if (!strlen($house_number_addition) > 0 || strlen($house_number_addition) > 16) {
+    $house_number_addition = '';
   }
+  return $house_number_addition;
 }
 
 /**
  * Check if postal code is valid.
  */
-function procpush_valid_postal_code(&$data) {
-  if (preg_match('/^[1-9][0-9]{3} ?[a-zA-Z]{2}$/', $data['postal_code'])) {
+function procpush_valid_postal_code($postal_code) {
+  if (preg_match('/^[1-9][0-9]{3} ?[a-zA-Z]{2}$/', $postal_code)) {
     // Nederlandse postcode.
-    $data['postal_code'] = strtoupper($data['postal_code']);
-    $data['postal_code'] = str_replace(' ', '', $data['postal_code']);
+    $postal_code = strtoupper($postal_code);
+    $postal_code = str_replace(' ', '', $postal_code);
   }
+  return $postal_code;
 }
 
 /**
  * Check if locality is valid.
  */
-function procpush_valid_locality(&$data) {
-  $data['locality'] = strtoupper($data['locality']);
+function procpush_valid_locality($locality) {
+  $locality = strtoupper($locality);
+  return $locality;
 }
 
 /**
  * Check if selections is valid.
  */
-function procpush_valid_selections(&$data) {
-  if (!is_array($data['selections'])) {
-    $data['selections'] = array();
+function procpush_valid_selections($selections) {
+  if (!is_array($selections)) {
+    $selections = array();
   }
   else {
     foreach (array('add', 'remove') as $type) {
-      if (!empty($data['selections'][$type])) {
-        if (!is_array($data['selections'][$type])) {
-          unset($data['selections'][$type]);
+      if (!empty($selections[$type])) {
+        if (!is_array($selections[$type])) {
+          unset($selections[$type]);
         }
       }
     }
-    if (empty($data['selections']['add']) && empty($data['selections']['remove'])) {
-      $data['selections'] = array();
+    if (empty($selections['add']) && empty($selections['remove'])) {
+      $selections = array();
     }
   }
+  return $selections;
 }
 
 /**
  * Check if sp_active is valid.
  */
-function procpush_valid_sp_active(&$data) {
-  if (!is_array($data['sp_active'])) {
+function procpush_valid_sp_active($sp_active) {
+  if (!is_array($sp_active)) {
     $selections = array();
   }
   else {
-    if (empty($data['sp_active']['active']) && empty($data['sp_active']['activities'])) {
-      $data['sp_active'] = array();
+    if (empty($sp_active['active']) && empty($sp_active['activities'])) {
+      $sp_active = array();
     }
   }
+  return $sp_active;
 }
 
 /**
  * Check if sp_work_and_int is valid.
  */
-function procpush_valid_sp_work_and_int(&$data) {
-  if (!is_array($data['sp_work_and_int'])) {
-    $data['sp_work_and_int'] = array();
+function procpush_valid_sp_work_and_int($sp_work_and_int) {
+  if (!is_array($sp_work_and_int)) {
+    $sp_work_and_int = array();
   }
   else {
     if (
-      empty($data['sp_work_and_int']['main_task']) &&
-      empty($data['sp_work_and_int']['industrial_sector']) &&
-      empty($data['sp_work_and_int']['occupational_group'])
+      empty($sp_work_and_int['main_task']) &&
+      empty($sp_work_and_int['industrial_sector']) &&
+      empty($sp_work_and_int['occupational_group'])
     ) {
-      $data['sp_work_and_int'] = array();
+      $sp_work_and_int = array();
     }
   }
+  return $sp_work_and_int;
 }
 
 /**
  * Check if overwrite is valid.
  */
-function procpush_valid_overwrite($data) {
-  $data['overwrite'] = empty($data['overwrite']) ? FALSE : TRUE;
+function procpush_valid_overwrite($overwrite) {
+  $overwrite = empty($overwrite) ? FALSE : TRUE;
+  return $overwrite;
 }
 
 /**
