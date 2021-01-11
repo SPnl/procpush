@@ -458,8 +458,7 @@ function procpush_validate_data(&$data) {
     if (isset($data[$key])) {
       if (strpos($key, 'phone') !== FALSE && empty($data[$key]) && !empty($data['overwrite'])) {
         // Set fake value that will be removed in Procurios.
-        // TODO: $data[$key] = '0600000000';
-        unset($data[$key]);
+        $data[$key] = '0600000000';
       } 
       elseif (!empty($data[$key])) {
         // Validate data with special function.
