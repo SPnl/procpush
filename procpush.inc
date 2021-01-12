@@ -429,7 +429,7 @@ function procpush_check_address_sufficient($data) {
  */
 function procpush_split_house_number_and_addition($house_number) {
   $house_number = trim($house_number);
-  $regex = "@^([0-9]+)([^0-9]*)$@";
+  $regex = "@^([0-9]+)([^0-9].*)$@";
   if (preg_match($regex, $house_number, $matches)) { 
     $split_house_number['house_number'] = trim($matches[1]);
     $split_house_number['house_number_addition'] = trim($matches[2]);
