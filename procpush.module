@@ -131,7 +131,7 @@ function procpush_data_fields() {
     'selections' =>  array(
       'title' => 'Selecties',
       'type' => 'array',
-      'meta' => TRUE,
+      'meta' => FALSE,
     ),
     'sp_active' =>  array(
       'title' => 'Actief SP',
