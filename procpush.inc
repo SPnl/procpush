@@ -212,7 +212,10 @@ function procpush_fix_data(&$data) {
     $split_house_number = procpush_split_house_number_and_addition($data['house_number_and_addition']);    
     if (!empty($split_house_number['house_number'])) {
       $data['house_number'] = $split_house_number['house_number'];
-      $data['house_number_addition'] = empty($split_house_number['house_number_addition']) ? '' : $split_house_number['house_number_addition'];
+      $data['house_number_addition'] = $split_house_number['house_number_addition'];
+    }
+    else {
+      $data['house_number'] = $data['house_number_and_addition'];
     }
   }
   unset($data['house_number_and_addition']);
