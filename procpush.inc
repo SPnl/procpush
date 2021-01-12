@@ -494,7 +494,7 @@ function procpush_valid_relation_id($relation_id) {
  * Check if first name is valid.
  */
 function procpush_valid_first_name($first_name) {
-  $first_name = ucwords(strtolower($first_name));
+  $first_name = ucwords(strtolower($first_name), " -\t\r\n\f\v");
   return $first_name;
 }
 
@@ -510,7 +510,7 @@ function procpush_valid_middle_name($middle_name) {
  * Check if last name is valid.
  */
 function procpush_valid_last_name($last_name) {
-  $last_name = ucwords(strtolower($last_name));
+  $last_name = ucwords(strtolower($last_name), " -\t\r\n\f\v");
   return $last_name;
 }
 
