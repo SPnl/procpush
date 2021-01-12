@@ -179,14 +179,9 @@ function procpush_push_contact($data, &$debug_info) {
       $data['last_name'] = '.';
     }
     // Make sure email exists (will be filtered out by Procurios).
-    if (!isset($data['email'])) {
+    // TODO: Implement remove@sp.nl for removing e-mail when overwrite and empty email.
+    if (empty($data['email'])) {
       $data['email'] = 'punt@sp.nl';
-    }
-    else {
-      if (empty($data['email']) && !empty($data['overwrite'])) {
-        //TODO: $data['email'] = 'remove@sp.nl';
-        unset($data['email']);
-      }
     }
 
     // Push data_object.
