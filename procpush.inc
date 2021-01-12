@@ -58,14 +58,14 @@ function procpush_create_data_object($data) {
     // Actief SP.
     if (!empty($data['sp_active']['active'])) {
       if (isset($data['sp_active']['active'])) {
-        $object['class_1_ff_344583'] = $data['sp_active']['active'];
+        $object['class_1_ff_123596'] = $data['sp_active']['active'];
       }
     }
     // Activiteiten SP.
     if (!empty($data['sp_active']['activities'])) {
       foreach ($data['sp_active']['activities'] as $activity) {
-        if (isset($api_properties['class_1_ff_344584']['properties'][$activity])) {
-          $object['class_1_ff_344584'][$activity] = TRUE;
+        if (isset($api_properties['class_1_ff_123597']['properties'][$activity])) {
+          $object['class_1_ff_123597'][$activity] = TRUE;
         }
       }
     }
@@ -76,22 +76,22 @@ function procpush_create_data_object($data) {
     // Hoofdtaak.
     if (!empty($data['sp_work_and_int']['main_task'])) {
       foreach ($data['sp_work_and_int']['main_task'] as $task) {
-        if (isset($api_properties['class_1_ff_344585']['properties'][$task])) {
-          $object['class_1_ff_344585'][$task] = TRUE;
+        if (isset($api_properties['class_1_ff_123600']['properties'][$task])) {
+          $object['class_1_ff_123600'][$task] = TRUE;
         }
       }
     }
     // Bedrijfstak.
     if (!empty($data['sp_work_and_int']['industrial_sector'])) {
       $sector = str_replace(', ', '_', $data['sp_work_and_int']['industrial_sector']);
-      if (isset($api_properties['class_1_ff_344587']['properties'][$sector])) {
-        $object['class_1_ff_344587'][$sector] = TRUE;
+      if (isset($api_properties['class_1_ff_123598']['properties'][$sector])) {
+        $object['class_1_ff_123598'][$sector] = TRUE;
       }
     }
     // Beroepsgroep.
     if (!empty($data['sp_work_and_int']['occupational_group'])) {
-      if (isset($api_properties['class_1_ff_344586']['properties'][$data['sp_work_and_int']['occupational_group']])) {
-        $object['class_1_ff_344586'][$data['sp_work_and_int']['occupational_group']] = TRUE;
+      if (isset($api_properties['class_1_ff_123599']['properties'][$data['sp_work_and_int']['occupational_group']])) {
+        $object['class_1_ff_123599'][$data['sp_work_and_int']['occupational_group']] = TRUE;
       }
     }
   }
@@ -106,7 +106,7 @@ function procpush_create_data_object($data) {
   }
 
   // Overwrite.
-  $object['class_2479_overwrite'] = empty($data['overwrite']) ? FALSE : TRUE;
+  $object['class_2483_overwrite'] = empty($data['overwrite']) ? FALSE : TRUE;
 
   if (procpush_check_address_sufficient($data)) {
     $object['class_1_relation_address_0']['country'] = 'NL';
