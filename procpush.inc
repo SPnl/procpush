@@ -196,17 +196,11 @@ function procpush_add_relation_to_selections($relation_id, $selections) {
  */
 function procpush_fix_data(&$data) {
   // Remove phone number.
+  // TODO
   if (!empty($data['phone'])) {
     $phone_stripped = preg_replace("/[^0-9]/", "", $data['phone']);
     // Check if phone needs to be removed.
     if (strpos($data['phone'], '[remove:') !== FALSE) {
-      // Remove phone number
-      if (preg_match('/^(00)?(31)?0?6([1-5]|8)[0-9]{7}$/', $phone_stripped)) {
-        $data['mobile_phone'] = '';
-      }
-      else {
-        $data['fixed_phone'] = '';
-      }
       unset($data['phone']);
     }
   }
