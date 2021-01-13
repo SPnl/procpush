@@ -18,14 +18,46 @@ function procpush_settings_form($form, &$form_state) {
       '#title' => 'Veld mapping',
     );
     $procpush_fields = procpush_data_fields_flat_list();
+    $non_api_procpush_fields = array(
+      'contact_number',
+      'name',
+      'phone',
+      'house_number_and_addition',
+    );
+    foreach ($non_api_procpush_fields as $key) {
+      unset($procpush_fields[$key]);
+    }
     $procurios_fields = procapi_registration_get_fields();
     foreach ($procpush_fields as $procpush_field_key => $procpush_field_title) {
       $form['field_mapping']['procpush_field_' . $procpush_field_key . '_mapping'] = array(
         '#type' => 'select',
         '#title' => $procpush_field_title,
         '#options' => $procurios_fields,
+        '#required' => TRUE,
         '#empty_option' => '- selecteer -',
         '#default_value' => variable_get('procpush_field_' . $procpush_field_key . '_mapping', ''),
+      );
+    }
+
+    // More complex fields.
+    $complex_fields = array(
+      'overwrite' => 'Gegevens overschrijven optie',
+      'privacy' => 'Privacy opties',
+      'sp_active_active' => 'Actief SP',
+      'sp_active_activities' => 'Activiteiten SP',
+      'sp_work_and_int_main_task' => 'Hoofdtaak',
+      'sp_work_and_int_industrial_sector' => 'Bedrijfstak',
+      'sp_work_and_int_occupational_group' => 'Beroepsgroep',
+    );
+
+    foreach ($complex_fields as $key => $title) {
+      $form['field_mapping']['procpush_field_' . $key . '_mapping'] = array(
+        '#type' => 'select',
+        '#title' => $title,
+        '#options' => $procurios_fields,
+        '#required' => TRUE,
+        '#empty_option' => '- selecteer -',
+        '#default_value' => variable_get('procpush_field_' . $key . '_mapping', ''),
       );
     }
   }

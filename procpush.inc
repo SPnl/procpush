@@ -58,14 +58,20 @@ function procpush_create_data_object($data) {
     // Actief SP.
     if (!empty($data['sp_active']['active'])) {
       if (isset($data['sp_active']['active'])) {
-        $object['class_1_ff_123596'] = $data['sp_active']['active'];
+        $api_key = variable_get('procpush_field_sp_active_active_mapping');
+        if (!empty($api_key)) {
+          $object[$api_key] = $data['sp_active']['active'];
+        }
       }
     }
     // Activiteiten SP.
     if (!empty($data['sp_active']['activities'])) {
-      foreach ($data['sp_active']['activities'] as $activity) {
-        if (isset($api_properties['class_1_ff_123597']['properties'][$activity])) {
-          $object['class_1_ff_123597'][$activity] = TRUE;
+      $api_key = variable_get('procpush_field_sp_active_activities_mapping');
+      if (!empty($api_key)) {
+        foreach ($data['sp_active']['activities'] as $activity) {
+          if (isset($api_properties[$api_key]['properties'][$activity])) {
+            $object[$api_key][$activity] = TRUE;
+          }
         }
       }
     }
@@ -75,43 +81,55 @@ function procpush_create_data_object($data) {
   if (!empty($data['sp_work_and_int'])) {
     // Hoofdtaak.
     if (!empty($data['sp_work_and_int']['main_task'])) {
-      foreach ($data['sp_work_and_int']['main_task'] as $task) {
-        if (isset($api_properties['class_1_ff_123600']['properties'][$task])) {
-          $object['class_1_ff_123600'][$task] = TRUE;
+      $api_key = variable_get('procpush_field_sp_work_and_int_main_task_mapping');
+      if (!empty($api_key)) {
+        foreach ($data['sp_work_and_int']['main_task'] as $task) {
+          if (isset($api_properties[$api_key]['properties'][$task])) {
+            $object[$api_key][$task] = TRUE;
+          }
         }
       }
     }
     // Bedrijfstak.
     if (!empty($data['sp_work_and_int']['industrial_sector'])) {
-      $sector = str_replace(', ', '_', $data['sp_work_and_int']['industrial_sector']);
-      if (isset($api_properties['class_1_ff_123598']['properties'][$sector])) {
-        $object['class_1_ff_123598'][$sector] = TRUE;
+      $api_key = variable_get('procpush_field_sp_work_and_int_industrial_sector_mapping');
+      if (!empty($api_key)) {
+        $sector = str_replace(', ', '_', $data['sp_work_and_int']['industrial_sector']);
+        if (isset($api_properties[$api_key]['properties'][$sector])) {
+          $object[$api_key][$sector] = TRUE;
+        }
       }
     }
     // Beroepsgroep.
     if (!empty($data['sp_work_and_int']['occupational_group'])) {
-      if (isset($api_properties['class_1_ff_123599']['properties'][$data['sp_work_and_int']['occupational_group']])) {
-        $object['class_1_ff_123599'][$data['sp_work_and_int']['occupational_group']] = TRUE;
+      $api_key = variable_get('procpush_field_sp_work_and_int_occupational_group_mapping');
+      if (!empty($api_key)) {
+        if (isset($api_properties[$api_key]['properties'][$data['sp_work_and_int']['occupational_group']])) {
+          $object[$api_key][$data['sp_work_and_int']['occupational_group']] = TRUE;
+        }
       }
     }
   }
 
   // Privacy.
   if (!empty($data['privacy'])) {
-    foreach ($data['privacy'] as $privacy_option) {
-      if (isset($api_properties['class_1_ff_123354']['properties'][$privacy_option])) {
-        $object['class_1_ff_123354'][$privacy_option] = TRUE;
+    $api_key = variable_get('procpush_field_privacy_mapping');
+    if (!empty($api_key)) {
+      foreach ($data['privacy'] as $privacy_option) {
+        if (isset($api_properties[$api_key]['properties'][$privacy_option])) {
+          $object[$api_key][$privacy_option] = TRUE;
+        }
       }
     }
   }
 
   // Overwrite.
-  $object['class_2483_overwrite'] = empty($data['overwrite']) ? FALSE : TRUE;
-
-  if (procpush_check_address_sufficient($data)) {
-    $object['class_1_relation_address_0']['country'] = 'NL';
+  if (isset($data['overwrite'])) {
+    $api_key = variable_get('procpush_field_overwrite_mapping');
+    if (!empty($api_key)) {
+      $object[$api_key] = empty($data['overwrite']) ? FALSE : TRUE;
+    }
   }
-
   return $object;
 }
 

@@ -128,6 +128,11 @@ function procpush_data_fields() {
       'type' => 'string',
       'meta' => FALSE,
     ),
+    'country' =>  array(
+      'title' => 'Land',
+      'type' => 'string',
+      'meta' => FALSE,
+    ),
     'selections' =>  array(
       'title' => 'Selecties',
       'type' => 'array',
@@ -183,8 +188,17 @@ function procpush_push_contact($data, &$debug_info) {
     if (empty($data['email'])) {
       $data['email'] = 'punt@sp.nl';
     }
+    // Make sure country exists.
+    if (empty($data['country']) && (
+      !empty($data['house_number']) ||
+      !empty($data['house_number_and_addition']) ||
+      !empty($data['postal_code']) ||
+      !empty($data['locality'])
+    )) {
+      $data['country'] = 'NL';
+    }
 
-    // Push data_object.
+    // Create data data_object.
     $data_object = procpush_create_data_object($data);
     if (!empty($data_object)) {
       // Get api form id.
