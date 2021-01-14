@@ -196,13 +196,16 @@ function procpush_add_relation_to_selections($relation_id, $selections) {
  */
 function procpush_fix_data(&$data) {
   // Remove phone number.
-  // TODO
-  if (!empty($data['phone'])) {
+  if (strpos($key, 'phone') !== FALSE && strpos($data[$key], '[remove:') !== FALSE && !empty($data['overwrite'])) {
     $phone_stripped = preg_replace("/[^0-9]/", "", $data['phone']);
-    // Check if phone needs to be removed.
-    if (strpos($data['phone'], '[remove:') !== FALSE) {
-      unset($data['phone']);
+    // Remove phone number
+    if (preg_match('/^(00)?(31)?0?6([1-5]|8)[0-9]{7}$/', $phone_stripped)) {
+      $data['mobile_phone'] = '0600000000';
     }
+    else {
+      $data['fixed_phone'] = '0600000000';
+    }
+    unset($data['phone']);
   }
 
   // Remove emojis.
@@ -470,23 +473,13 @@ function procpush_middle_names() {
 function procpush_validate_data(&$data) {
   $fields = procpush_data_fields();
   foreach ($fields as $key => $field_info) {
-    if (isset($data[$key])) {
-      if (strpos($key, 'phone') !== FALSE && empty($data[$key]) && !empty($data['overwrite'])) {
-        // Set fake value that will be removed in Procurios.
-        $data[$key] = '0600000000';
-      } 
-      elseif (!empty($data[$key])) {
-        // Validate data with special function.
-        if (function_exists('procpush_valid_' . $key)) {
-          $data[$key] = call_user_func('procpush_valid_' . $key, $data[$key]);
-        }
-        // Remove empty data keys.
-        if (empty($data[$key])) {
-          unset($data[$key]);
-        }
+    if (!empty($data[$key])) {
+      // Validate data with special function.
+      if (function_exists('procpush_valid_' . $key)) {
+        $data[$key] = call_user_func('procpush_valid_' . $key, $data[$key]);
       }
     }
-    if (empty($data[$key]) && empty($data['overwrite'])) {
+    if (empty($data[$key])) {
       unset($data[$key]);
     }
   }
