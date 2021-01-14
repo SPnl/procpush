@@ -195,17 +195,29 @@ function procpush_add_relation_to_selections($relation_id, $selections) {
  * Prepare data for Procurios.
  */
 function procpush_fix_data(&$data) {
-  // Remove phone number.
-  if (strpos($key, 'phone') !== FALSE && strpos($data[$key], '[remove:') !== FALSE && !empty($data['overwrite'])) {
-    $phone_stripped = preg_replace("/[^0-9]/", "", $data['phone']);
-    // Remove phone number
-    if (preg_match('/^(00)?(31)?0?6([1-5]|8)[0-9]{7}$/', $phone_stripped)) {
-      $data['mobile_phone'] = '0600000000';
+  // Check for remove phone number.
+  if (!empty($data['overwrite'])) {
+    $phone_types = array('phone', 'mobile_phone', 'fixed_phone');
+    foreach ($phone_types as $key) {
+      if (!empty($data[$key])) {
+        if (strpos($data[$key], '[remove:') !== FALSE) {
+          $phone_stripped = preg_replace("/[^0-9]/", "", $data[$key]);
+          // Remove phone number
+          if ($key == 'phone') {
+            if (preg_match('/^(00)?(31)?0?6([1-5]|8)[0-9]{7}$/', $phone_stripped)) {
+              $data['mobile_phone'] = '0600000000';
+            }
+            else {
+              $data['fixed_phone'] = '0600000000';
+            }
+            unset($data['phone']);
+          }
+          else {
+            $data[$key] = '0600000000';
+          }
+        }
+      } 
     }
-    else {
-      $data['fixed_phone'] = '0600000000';
-    }
-    unset($data['phone']);
   }
 
   // Remove emojis.
