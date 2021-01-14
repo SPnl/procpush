@@ -261,13 +261,9 @@ function procpush_fix_data(&$data) {
 
   // If contact number is available, and relation id is not set, try to map contact number to relation id.
   if (empty($data['relation_id']) && !empty($data['contact_number'])) {
-    $query = "SELECT relation_id FROM {procpush_id_map} WHERE contact_number = :contact_number";
-    $result = db_query($query, array('contact_number' => $data['contact_number']));
-    if ($result) {
-      $relation_id = $result->fetchField();
-      if (!empty($relation_id)) {
-        $data['relation_id'] = $relation_id;
-      }
+    $relation_id = procpush_get_relation_id($data['contact_number']);
+    if (!empty($relation_id)) {
+      $data['relation_id'] = $relation_id;
     }
   }
   procpush_validate_data($data);
