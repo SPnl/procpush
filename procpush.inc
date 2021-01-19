@@ -226,7 +226,7 @@ function procpush_fix_data(&$data) {
   // Split name in first and last name when possible.
   if (!empty($data['name']) && empty($data['last_name'])) {
     $split_name = procpush_split_name($data['name']);    
-    if (!empty($split_name['last_name'])) {
+    if (!empty($split_name['last_name']) || !empty($split_name['first_name'])) {
       $data['first_name'] = empty($split_name['first_name']) ? '' : $split_name['first_name'];
       $data['middle_name'] = empty($split_name['middle_name']) ? '' : $split_name['middle_name'];
       $data['last_name'] = $split_name['last_name'];
