@@ -369,9 +369,9 @@ function procpush_split_name($name) {
     }
     elseif (count($name_parts) === 1) {
       // Only single last name.
-      $names['first_name'] = '';
+      $names['first_name'] = $name;
       $names['middle_name'] = '';
-      $names['last_name'] = $name;
+      $names['last_name'] = '';
     }
     else {
       // Split in first word and rest for last name.
