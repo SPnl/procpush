@@ -249,7 +249,7 @@ function procpush_push_contact($data, &$debug_info) {
   $debug_info['push_new_contact_error'] = $error;
 
   // An error occurred.
-  $error_message = 'Er is een fout opgetreden bij het pushen van contact data naar Procurios.';
+  $error_message = 'Er is een fout opgetreden bij het pushen van contact data naar Procurios: ' . $error;
   procpush_error($error_message, $debug_info);
   return FALSE;
 }
