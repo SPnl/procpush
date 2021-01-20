@@ -510,7 +510,9 @@ function procpush_valid_relation_id($relation_id) {
  * Check if first name is valid.
  */
 function procpush_valid_first_name($first_name) {
-  $first_name = ucwords(strtolower($first_name), " -\t\r\n\f\v");
+  if (!preg_match('/^([A-Z]\.?)+$/', $first_name)) {
+    $first_name = ucwords(strtolower($first_name), " -\t\r\n\f\v");
+  }
   return $first_name;
 }
 
