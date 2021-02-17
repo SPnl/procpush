@@ -33,111 +33,111 @@ function procpush_check_submission_sufficient($data) {
  * Create procurios form submission object from webformsync data.
  */
 function procpush_create_data_object($data) {
-  // Simple text field mappings are set in admin form.
+  $flat_fields = procpush_data_fields_flat_list();
   $mapping = variable_get('procpush_field_mapping');
   $object = array();
-  foreach ($mapping as $webformsync_key => $procurios_key) {
-    $keys = explode('|', $procurios_key);
-    if (isset($data[$webformsync_key])) {
-      $md = array();
-      $md[$keys[count($keys)-1]] = $data[$webformsync_key];
-      for($i=count($keys)-2; $i>-1; $i--) {
-        $md[$keys[$i]] = $md;
-        unset($md[$keys[$i+1]]);
+  // String fields.
+  foreach ($mapping as $data_key => $procurios_key) {
+    if (isset($flat_fields[$data_key])) {
+      $keys = explode('|', $procurios_key);
+      if (isset($data[$data_key])) {
+        $md = array();
+        $md[$keys[count($keys) - 1]] = $data[$data_key];
+        for ($i = count($keys) - 2; $i > -1; $i--) {
+          $md[$keys[$i]] = $md;
+          unset($md[$keys[$i + 1]]);
+        }
+        $object = array_merge_recursive($object, $md);
       }
-      $object = array_merge_recursive($object, $md);
     }
   }
 
-  // Get form schema to validate field values.
+  // Complex fields.
   $api_schema_raw = procapi_registration_get_form_schema();
   $api_properties = $api_schema_raw['properties'];
+  $complex_fields = procpush_data_fields_complex_list();
+  foreach ($mapping as $data_key => $procurios_key) {
+    if (isset($complex_fields[$data_key])) {
+      $api_key = variable_get('procpush_field_' . $data_key . '_mapping');
+      if (!empty($api_key)) {
+        switch ($data_key) {
+          case 'sp_active_active':
+            if (isset($data['sp_active']['active'])) {
+              $object[$api_key] = $data['sp_active']['active'];
+            }
+            break;
 
-  // SP Actief.
-  if (!empty($data['sp_active'])) {
-    // Actief SP.
-    if (!empty($data['sp_active']['active'])) {
-      if (isset($data['sp_active']['active'])) {
-        $api_key = variable_get('procpush_field_sp_active_active_mapping');
-        if (!empty($api_key)) {
-          $object[$api_key] = $data['sp_active']['active'];
-        }
-      }
-    }
-    // Activiteiten SP.
-    if (!empty($data['sp_active']['activities'])) {
-      $api_key = variable_get('procpush_field_sp_active_activities_mapping');
-      if (!empty($api_key)) {
-        foreach ($data['sp_active']['activities'] as $activity) {
-          if (isset($api_properties[$api_key]['properties'][$activity])) {
-            $object[$api_key][$activity] = TRUE;
-          }
-        }
-      }
-    }
-  }
-  
-  // SP Work and Interests field mapping.
-  if (!empty($data['sp_work_and_int'])) {
-    // Hoofdtaak.
-    if (!empty($data['sp_work_and_int']['main_task'])) {
-      $api_key = variable_get('procpush_field_sp_work_and_int_main_task_mapping');
-      if (!empty($api_key)) {
-        foreach ($data['sp_work_and_int']['main_task'] as $task) {
-          if (isset($api_properties[$api_key]['properties'][$task])) {
-            $object[$api_key][$task] = TRUE;
-          }
-        }
-      }
-    }
-    // Bedrijfstak.
-    if (!empty($data['sp_work_and_int']['industrial_sector'])) {
-      $api_key = variable_get('procpush_field_sp_work_and_int_industrial_sector_mapping');
-      if (!empty($api_key)) {
-        $sector = str_replace(', ', '_', $data['sp_work_and_int']['industrial_sector']);
-        if (isset($api_properties[$api_key]['properties'][$sector])) {
-          $object[$api_key][$sector] = TRUE;
-        }
-      }
-    }
-    // Beroepsgroep.
-    if (!empty($data['sp_work_and_int']['occupational_group'])) {
-      $api_key = variable_get('procpush_field_sp_work_and_int_occupational_group_mapping');
-      if (!empty($api_key)) {
-        if (isset($api_properties[$api_key]['properties'][$data['sp_work_and_int']['occupational_group']])) {
-          $object[$api_key][$data['sp_work_and_int']['occupational_group']] = TRUE;
+          case 'sp_active_activities':
+            if (!empty($data['sp_active']['activities'])) {
+              foreach ($data['sp_active']['activities'] as $activity) {
+                if (isset($api_properties[$api_key]['properties'][$activity])) {
+                  $object[$api_key][$activity] = TRUE;
+                }
+              }
+            }
+            break;
+
+          case 'sp_work_and_int_main_task':
+            if (!empty($data['sp_work_and_int']['main_task'])) {
+              foreach ($data['sp_work_and_int']['main_task'] as $task) {
+                if (isset($api_properties[$api_key]['properties'][$task])) {
+                  $object[$api_key][$task] = TRUE;
+                }
+              }
+            }
+            break;
+
+          case 'sp_work_and_int_industrial_sector':
+            if (!empty($data['sp_work_and_int']['industrial_sector'])) {
+              $sector = str_replace(', ', '_', $data['sp_work_and_int']['industrial_sector']);
+              if (isset($api_properties[$api_key]['properties'][$sector])) {
+                $object[$api_key][$sector] = TRUE;
+              }
+            }
+            break;
+
+          case 'sp_work_and_int_occupational_group':
+            if (!empty($data['sp_work_and_int']['occupational_group'])) {
+              if (isset($api_properties[$api_key]['properties'][$data['sp_work_and_int']['occupational_group']])) {
+                $object[$api_key][$data['sp_work_and_int']['occupational_group']] = TRUE;
+              }
+            }
+            break;
+
+          case 'privacy':
+            if (!empty($data['privacy'])) {
+              foreach ($data['privacy'] as $privacy_option) {
+                if (isset($api_properties[$api_key]['properties'][$privacy_option])) {
+                  $object[$api_key][$privacy_option] = TRUE;
+                }
+              }
+            }
+            break;
+
+          case 'overwrite':
+            if (isset($data['overwrite'])) {
+              $object[$api_key] = empty($data['overwrite']) ? FALSE : TRUE;
+            }
+            break;
+
+          case 'sp_news_subscription':
+            if (!empty($data['sp_news_subscription'])) {
+              $object[$api_key] = array('1' => empty($data['sp_news_subscription']) ? FALSE : TRUE);
+            }
+            break;
+
         }
       }
     }
   }
 
-  // Privacy.
-  if (!empty($data['privacy'])) {
-    $api_key = variable_get('procpush_field_privacy_mapping');
-    if (!empty($api_key)) {
-      foreach ($data['privacy'] as $privacy_option) {
-        if (isset($api_properties[$api_key]['properties'][$privacy_option])) {
-          $object[$api_key][$privacy_option] = TRUE;
-        }
-      }
-    }
-  }
-
-  // Overwrite.
-  if (isset($data['overwrite'])) {
-    $api_key = variable_get('procpush_field_overwrite_mapping');
-    if (!empty($api_key)) {
-      $object[$api_key] = empty($data['overwrite']) ? FALSE : TRUE;
-    }
-  }
   return $object;
 }
 
-/*
+/**
  * Mail error to tdgraaff.
  */
 function procpush_error($error_message, $debug_data) {
-  global $base_url;
   $message = array(
     'content' => '<p>' . $error_message . '</p><p><pre>Debug data:<pre>@message_data</pre></p>',
     'data' => array(
@@ -160,6 +160,20 @@ function procpush_data_fields_flat_list() {
     }
   }
   return $flat_fields;
+}
+
+function procpush_data_fields_complex_list() {
+  // More complex fields.
+  return array(
+    'overwrite' => 'Gegevens overschrijven optie',
+    'privacy' => 'Privacy opties',
+    'sp_active_active' => 'Actief SP',
+    'sp_active_activities' => 'Activiteiten SP',
+    'sp_work_and_int_main_task' => 'Hoofdtaak',
+    'sp_work_and_int_industrial_sector' => 'Bedrijfstak',
+    'sp_work_and_int_occupational_group' => 'Beroepsgroep',
+    'sp_news_subscription' => 'Nieuwsbrief aanmelding',
+  );
 }
 
 /**
@@ -216,7 +230,7 @@ function procpush_fix_data(&$data) {
             $data[$key] = '0600000000';
           }
         }
-      } 
+      }
     }
   }
 
@@ -225,7 +239,7 @@ function procpush_fix_data(&$data) {
 
   // Split name in first and last name when possible.
   if (!empty($data['name']) && empty($data['last_name'])) {
-    $split_name = procpush_split_name($data['name']);    
+    $split_name = procpush_split_name($data['name']);
     if (!empty($split_name['last_name']) || !empty($split_name['first_name'])) {
       $data['first_name'] = empty($split_name['first_name']) ? '' : trim($split_name['first_name']);
       $data['middle_name'] = empty($split_name['middle_name']) ? '' : trim($split_name['middle_name']);
@@ -236,7 +250,7 @@ function procpush_fix_data(&$data) {
 
   // Split house_number_and_addition when available.
   if (!empty($data['house_number_and_addition']) && empty($data['house_number'])) {
-    $split_house_number = procpush_split_house_number_and_addition($data['house_number_and_addition']);    
+    $split_house_number = procpush_split_house_number_and_addition($data['house_number_and_addition']);
     if (!empty($split_house_number['house_number'])) {
       $data['house_number'] = $split_house_number['house_number'];
       $data['house_number_addition'] = $split_house_number['house_number_addition'];
@@ -386,8 +400,8 @@ function procpush_split_name($name) {
     'first_name',
     'last_name',
   );
-  foreach ($parts as $part) {   
-    if (isset($names[$part])) {  
+  foreach ($parts as $part) {
+    if (isset($names[$part])) {
       if (!empty($names[$part])) {
         $names[$part] = ucwords($names[$part]);
       }
@@ -451,12 +465,12 @@ function procpush_check_address_sufficient($data) {
 }
 
 /**
- * Split house number.                                                                                                                       
+ * Split house number.
  */
 function procpush_split_house_number_and_addition($house_number) {
   $house_number = trim($house_number);
   $regex = "@^([0-9]+)([^0-9].*)$@";
-  if (preg_match($regex, $house_number, $matches)) { 
+  if (preg_match($regex, $house_number, $matches)) {
     $split_house_number['house_number'] = trim($matches[1]);
     $split_house_number['house_number_addition'] = trim($matches[2]);
     if (!empty($split_house_number['house_number'])) {

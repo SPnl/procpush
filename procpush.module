@@ -153,6 +153,11 @@ function procpush_data_fields() {
       'type' => 'array',
       'meta' => FALSE,
     ),
+    'sp_news_subscription' => array(
+      'title' => 'Wil SP nieuws ontvangen',
+      'type' => 'boolean',
+      'meta' => FALSE,
+    ),
   );
   return $data_fields;
 }
@@ -175,6 +180,7 @@ function procpush_push_contact($data, &$debug_info) {
 
   // Fix data for Procurios.
   procpush_fix_data($data);
+
   $debug_info['fixed_data'] = $data;
 
   // Check if sufficient data.

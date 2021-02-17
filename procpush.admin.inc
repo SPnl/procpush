@@ -40,16 +40,7 @@ function procpush_settings_form($form, &$form_state) {
     }
 
     // More complex fields.
-    $complex_fields = array(
-      'overwrite' => 'Gegevens overschrijven optie',
-      'privacy' => 'Privacy opties',
-      'sp_active_active' => 'Actief SP',
-      'sp_active_activities' => 'Activiteiten SP',
-      'sp_work_and_int_main_task' => 'Hoofdtaak',
-      'sp_work_and_int_industrial_sector' => 'Bedrijfstak',
-      'sp_work_and_int_occupational_group' => 'Beroepsgroep',
-    );
-
+    $complex_fields = procpush_data_fields_complex_list();
     foreach ($complex_fields as $key => $title) {
       $form['field_mapping']['procpush_field_' . $key . '_mapping'] = array(
         '#type' => 'select',
