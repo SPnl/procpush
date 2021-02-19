@@ -59,21 +59,21 @@ function procpush_update_7002() {
   if (!db_table_exists('procpush_first_names')) {
     $schema = procpush_schema();
     db_create_table('procpush_first_names', $schema['procpush_first_names']);
-    // Import names.
-    $row = 1;
-    $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'procpush') . '/procpush_first_names.csv';
-    if (($handle = fopen($file, 'r')) !== FALSE) {
-      while (($data = fgetcsv($handle, 1000)) !== FALSE) {
-        $names[] = reset($data);
-      }
-      fclose($handle);
+  }
+  // Import names.
+  $row = 1;
+  $file = DRUPAL_ROOT . '/' . drupal_get_path('module', 'procpush') . '/procpush_first_names.csv';
+  if (($handle = fopen($file, 'r')) !== FALSE) {
+    while (($data = fgetcsv($handle, 1000)) !== FALSE) {
+      $names[] = reset($data);
     }
-    foreach ($names as $name) {
-      db_insert('procpush_first_names')
-        ->fields(array(
-          'first_name' => $name,
-        ))
-        ->execute();
-    }
+    fclose($handle);
+  }
+  foreach ($names as $name) {
+    db_insert('procpush_first_names')
+      ->fields(array(
+        'first_name' => $name,
+      ))
+      ->execute();
   }
 }
