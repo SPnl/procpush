@@ -98,8 +98,9 @@ function procpush_create_data_object($data) {
 
           case 'sp_work_and_int_occupational_group':
             if (!empty($data['sp_work_and_int']['occupational_group'])) {
-              if (isset($api_properties[$api_key]['properties'][$data['sp_work_and_int']['occupational_group']])) {
-                $object[$api_key][$data['sp_work_and_int']['occupational_group']] = TRUE;
+              $occupational_group = str_replace(', ', '_', $data['sp_work_and_int']['occupational_group']);
+              if (isset($api_properties[$api_key]['properties'][$occupational_group])) {
+                $object[$api_key][$occupational_group] = TRUE;
               }
             }
             break;
