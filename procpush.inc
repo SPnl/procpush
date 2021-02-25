@@ -107,9 +107,9 @@ function procpush_create_data_object($data) {
 
           case 'privacy':
             if (!empty($data['privacy'])) {
-              foreach ($data['privacy'] as $privacy_option) {
-                if (isset($api_properties[$api_key]['properties'][$privacy_option])) {
-                  $object[$api_key][$privacy_option] = TRUE;
+              foreach ($data['privacy'] as $privacy_key => $privacy_value) {
+                if (isset($api_properties[$api_key]['properties'][$privacy_key])) {
+                  $object[$api_key][$privacy_key] = $privacy_value;
                 }
               }
             }

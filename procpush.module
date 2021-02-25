@@ -30,6 +30,14 @@ function procpush_init() {
  *   occupational_group ,
  * )
  *
+ * privacy => array(
+ *   do_not_mail => TRUE,
+ *   do_not_email => FALSE,
+ *   do_not_phone => TRUE,
+ *   do_not_sms => TRUE,
+ *   is_opt_out => TRUE,
+ * )
+ *
  */
 function procpush_data_fields() {
   $data_fields = array(
