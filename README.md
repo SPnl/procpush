@@ -116,6 +116,7 @@ Array
 
 De telefoonnummer velden kunnen een waarde [remove:0628329832] hebben. De bedoeling is dan dat het telefoonnummer in Procurios verwijderd wordt. Dit is een lelijke oplossing. Dit zou bij een nieuwe opzet beter kunnen worden opgelost zoals bij de selectie data structuur:
 
+```
 Array
 (
     [relation_id] => 3458765
@@ -138,6 +139,7 @@ Array
 ​        )
 ​    [overwrite] => 1
 )
+```
 
 ***Toelichting overwrite veld***
 
