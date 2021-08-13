@@ -220,14 +220,7 @@ function procpush_push_contact($data, &$debug_info) {
       if (!empty($form_id)) {
         $debug_info['push_data_object'] = $data_object;
         // Push data_object to Procurios.
-        if ($relation_id = procapi_registration_push_data_object($data_object)) {
-          // Succesful registration.
-          if (!empty($data['relation_id']) && $data['relation_id'] != $relation_id) {
-            $message = 'Relation id returned from registration api (' . $relation_id . ') differs from relation id given to registration api (' . $data['relation_id'] . ').';
-            procpush_error($message, $debug_info);
-          }
-        }
-        else {
+        if (! $relation_id = procapi_registration_push_data_object($data_object)) {
           $error = 'Error pushing registration data.';
         }
       }
