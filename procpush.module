@@ -41,6 +41,16 @@ function procpush_init() {
  */
 function procpush_data_fields() {
   $data_fields = array(
+    'relation_id' =>  array(
+      'title' => 'Relatienummer',
+      'type' => 'string',
+      'meta' => TRUE,
+    ),
+    'contact_number' => array(
+      'title' => 'Contact nummer',
+      'type' => 'string',
+      'meta' => TRUE,
+    ),
     'overwrite' =>  array(
       'title' => 'Overschrijven',
       'type' => 'boolean',
