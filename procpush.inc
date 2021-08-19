@@ -62,7 +62,7 @@ function procpush_create_data_object($data) {
       if (!empty($api_key)) {
         switch ($data_key) {
           case 'sp_active_active':
-            if (isset($data['sp_active']['active'])) {
+            if (!empty($data['sp_active']['active'])) {
               $object[$api_key] = $data['sp_active']['active'];
             }
             break;
