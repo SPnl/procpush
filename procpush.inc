@@ -136,7 +136,7 @@ function procpush_create_data_object($data) {
 }
 
 /**
- * Mail error to tdgraaff.
+ * Mail error to webteam.
  */
 function procpush_error($error_message, $debug_data) {
   $message = array(
@@ -146,7 +146,7 @@ function procpush_error($error_message, $debug_data) {
     ),
   );
   watchdog('procpush', $message['content'], $message['data'], WATCHDOG_ERROR);
-  drupal_mail('spwebformsync', 'error', 'tdgraaff@sp.nl', language_default(), $message, 'webmaster@sp.nl');
+  drupal_mail('spwebformsync', 'error', 'webteam@sp.nl', language_default(), $message, 'webteam@sp.nl');
 }
 
 function procpush_data_fields_flat_list() {
